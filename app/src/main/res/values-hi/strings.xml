@@ -14,6 +14,8 @@
     <string name="auth_register_title">अपना खाता बनाएं</string>
     <string name="auth_email">ईमेल</string>
     <string name="auth_password">पासवर्ड</string>
+    <string name="auth_show_password">पासवर्ड दिखाएं</string>
+    <string name="auth_hide_password">पासवर्ड छिपाएं</string>
     <string name="auth_username">उपयोगकर्ता नाम</string>
     <string name="auth_username_required">उपयोगकर्ता नाम आवश्यक है।</string>
     <string name="auth_login">लॉग इन</string>

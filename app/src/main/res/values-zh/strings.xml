@@ -14,6 +14,8 @@
     <string name="auth_register_title">创建您的账户</string>
     <string name="auth_email">电子邮件</string>
     <string name="auth_password">密码</string>
+    <string name="auth_show_password">显示密码</string>
+    <string name="auth_hide_password">隐藏密码</string>
     <string name="auth_username">用户名</string>
     <string name="auth_username_required">需要用户名。</string>
     <string name="auth_login">登录</string>

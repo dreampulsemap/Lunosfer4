@@ -14,6 +14,8 @@
     <string name="auth_register_title">Créer votre compte</string>
     <string name="auth_email">E-mail</string>
     <string name="auth_password">Mot de passe</string>
+    <string name="auth_show_password">Afficher le mot de passe</string>
+    <string name="auth_hide_password">Masquer le mot de passe</string>
     <string name="auth_username">Nom d\'utilisateur</string>
     <string name="auth_username_required">Le nom d\'utilisateur est requis.</string>
     <string name="auth_login">Se connecter</string>
