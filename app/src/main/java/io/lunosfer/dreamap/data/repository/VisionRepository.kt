@@ -16,6 +16,12 @@ class VisionRepository {
         api.getGoalsFeed(mode = "feed", page = 0, status = status).goals
     }
 
+    /** Sadece giriş yapmış kullanıcının KENDİ vizyonları — "Bugün Yapman Gerekenler"
+     * (günlük tohum) bölümü bunu kullanmalı, herkese açık feed'i değil. */
+    suspend fun loadOwnGoals(): Result<List<Goal>> = runCatching {
+        api.getGoalsFeed(mode = "own", page = 0, status = null).goals
+    }
+
     suspend fun createGoal(request: CreateGoalRequest): Result<Goal> = runCatching {
         val res = api.createGoal(request)
         if (res.goal == null && res.error != null) {
