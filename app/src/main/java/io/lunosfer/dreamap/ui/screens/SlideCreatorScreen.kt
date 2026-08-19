@@ -86,6 +86,11 @@ fun SlideCreatorScreen(
     ) { uri ->
         uri?.let { viewModel.addSlideFromDevice(context, it) }
     }
+    val videoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { viewModel.addSlideFromDeviceVideo(context, it) }
+    }
 
     Scaffold(
         containerColor = Void950,
@@ -206,6 +211,7 @@ fun SlideCreatorScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(
                         Triple(Icons.Default.Image, stringResource(R.string.slide_creator_pick_device)) { photoPickerLauncher.launch("image/*") },
+                        Triple(Icons.Default.Movie, stringResource(R.string.slide_creator_pick_device_video)) { videoPickerLauncher.launch("video/*") },
                         Triple(Icons.Default.Search, stringResource(R.string.slide_creator_pick_pixabay_image)) { showPixabayImages = true },
                         Triple(Icons.Default.Movie, stringResource(R.string.slide_creator_pick_pixabay_video)) { showPixabayVideos = true }
                     ).forEach { (icon, label, action) ->
