@@ -25,6 +25,11 @@ class VisionViewModel(
     private val _state = MutableStateFlow<UiState<List<Goal>>>(UiState.Loading)
     val state: StateFlow<UiState<List<Goal>>> = _state.asStateFlow()
 
+    // "Bugün Yapman Gerekenler" (günlük tohum) bölümü için sadece kendi aktif
+    // vizyonlarım — herkese açık feed'ten değil, mode="own" ile ayrı çekiliyor.
+    private val _ownActiveGoals = MutableStateFlow<List<Goal>>(emptyList())
+    val ownActiveGoals: StateFlow<List<Goal>> = _ownActiveGoals.asStateFlow()
+
     private val _compassState = MutableStateFlow<CompassUiState>(CompassUiState.Idle)
     val compassState: StateFlow<CompassUiState> = _compassState.asStateFlow()
 
@@ -36,11 +41,13 @@ class VisionViewModel(
 
     init {
         load()
+        loadOwnActiveGoals()
         loadDailySeeds()
     }
 
     fun retry() {
         load()
+        loadOwnActiveGoals()
         loadDailySeeds()
     }
 
@@ -50,6 +57,15 @@ class VisionViewModel(
             repository.loadFirstPage()
                 .onSuccess { _state.value = UiState.Success(it) }
                 .onFailure { _state.value = UiState.Error(it.message ?: io.lunosfer.dreamap.DreamapApp.instance.getString(io.lunosfer.dreamap.R.string.error_unknown)) }
+        }
+    }
+
+    private fun loadOwnActiveGoals() {
+        viewModelScope.launch {
+            repository.loadOwnGoals()
+                .onSuccess { goals ->
+                    _ownActiveGoals.value = goals.filter { it.status == "active" || it.status == null }
+                }
         }
     }
 
