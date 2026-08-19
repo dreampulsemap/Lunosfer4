@@ -462,6 +462,7 @@
     <string name="slide_creator_uploading">Uploading…</string>
     <string name="slide_creator_add_slide">Add Slide</string>
     <string name="slide_creator_add_dialog_title">Add Image / Video</string>
+    <string name="slide_creator_pick_device_video">Choose Video from Device</string>
     <string name="slide_creator_pick_device">Choose from Device</string>
     <string name="slide_creator_pick_pixabay_image">Search Pixabay Images</string>
     <string name="slide_creator_pick_pixabay_video">Search Pixabay Videos</string>
