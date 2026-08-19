@@ -42,7 +42,7 @@ import io.lunosfer.dreamap.ui.viewmodel.UiState
 
 @Composable
 fun ExploreScreen(
-    onGoalClick: (String) -> Unit = {},
+    onOpenReels: (List<Goal>, Int) -> Unit = { _, _ -> },
     viewModel: ExploreViewModel = viewModel()
 ) {
     val activeTab by viewModel.activeTab.collectAsState()
@@ -122,7 +122,7 @@ fun ExploreScreen(
                         is UiState.Success -> GoalsGrid(
                             goals = current.data,
                             emptyMessage = stringResource(R.string.empty_vision),
-                            onGoalClick = onGoalClick
+                            onOpenReels = onOpenReels
                         )
                     }
                 }
@@ -135,7 +135,7 @@ fun ExploreScreen(
                         is UiState.Success -> GoalsGrid(
                             goals = current.data,
                             emptyMessage = stringResource(R.string.empty_victory),
-                            onGoalClick = onGoalClick
+                            onOpenReels = onOpenReels
                         )
                     }
                 }
@@ -148,7 +148,7 @@ fun ExploreScreen(
                         is UiState.Success -> GoalsGrid(
                             goals = current.data,
                             emptyMessage = stringResource(R.string.empty_phoenix),
-                            onGoalClick = onGoalClick
+                            onOpenReels = onOpenReels
                         )
                     }
                 }
@@ -234,7 +234,7 @@ private fun ExploreTile(dream: Dream) {
 private fun GoalsGrid(
     goals: List<Goal>,
     emptyMessage: String,
-    onGoalClick: (String) -> Unit
+    onOpenReels: (List<Goal>, Int) -> Unit
 ) {
     if (goals.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
@@ -258,7 +258,10 @@ private fun GoalsGrid(
         items(goals, key = { it.id }) { goal ->
             VisionGridCard(
                 goal = goal,
-                onClick = { onGoalClick(goal.id) }
+                onClick = {
+                    val index = goals.indexOfFirst { it.id == goal.id }.coerceAtLeast(0)
+                    onOpenReels(goals, index)
+                }
             )
         }
     }

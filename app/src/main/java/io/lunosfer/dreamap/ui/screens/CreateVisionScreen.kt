@@ -53,6 +53,12 @@ fun CreateVisionScreen(
     var targetDate by remember { mutableStateOf<String?>(null) }
     var visibility by remember { mutableStateOf("public") }
     var coverImageUrl by remember { mutableStateOf<String?>(null) }
+    // Pixabay attribution — kapak görselini goal oluşturulduktan SONRA
+    // /api/goals/add-image-from-pixabay ile gerçekten kalıcı hale getirmek için gerekli.
+    // Sadece CreateGoalRequest.coverImageUrl göndermek görselin DB'ye yazılmasını garanti etmiyor.
+    var coverImagePixabayId by remember { mutableStateOf<Long?>(null) }
+    var coverImageTags by remember { mutableStateOf("") }
+    var coverImagePixabayUser by remember { mutableStateOf("") }
     var showPixabayDialog by remember { mutableStateOf(false) }
 
     var roadmapInput by remember { mutableStateOf("") }
@@ -183,11 +189,17 @@ fun CreateVisionScreen(
             if (showPixabayDialog) {
                 PixabayMediaPickerDialog(
                     onDismissRequest = { showPixabayDialog = false },
-                    onImageSelected = { _, url, _, _ ->
+                    onImageSelected = { pixabayId, url, tags, user ->
                         coverImageUrl = url
+                        coverImagePixabayId = pixabayId
+                        coverImageTags = tags
+                        coverImagePixabayUser = user
                     },
-                    onVideoSelected = { _, url, _, _, _ ->
+                    onVideoSelected = { pixabayId, url, tags, user, _ ->
                         coverImageUrl = url
+                        coverImagePixabayId = pixabayId
+                        coverImageTags = tags
+                        coverImagePixabayUser = user
                     }
                 )
             }
@@ -219,7 +231,12 @@ fun CreateVisionScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                         IconButton(
-                            onClick = { coverImageUrl = null },
+                            onClick = {
+                                coverImageUrl = null
+                                coverImagePixabayId = null
+                                coverImageTags = ""
+                                coverImagePixabayUser = ""
+                            },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(8.dp)
@@ -418,18 +435,51 @@ fun CreateVisionScreen(
                             roadmap = if (roadmapList.isNotEmpty()) roadmapList else null
                         )
 
-                        repository.createGoal(req).onSuccess { newGoal ->
+                        val createResult = repository.createGoal(req)
+                        val newGoal = createResult.getOrNull()
+                        if (newGoal != null) {
+                            // Kapak görseli Pixabay'den seçildiyse, CreateGoalRequest'teki
+                            // cover_image_url alanı tek başına DB'ye kalıcı yazılmayı garanti
+                            // etmiyor (galeri/kapak tablosu ayrı bir endpoint bekliyor —
+                            // GoalDetailScreen'deki "görsel ekle" akışıyla aynı desen). Goal
+                            // artık var olduğuna göre, görseli burada gerçekten kaydediyoruz —
+                            // ve ekrandan ayrılmadan ÖNCE, tamamlanmasını bekliyoruz.
+                            val pixabayId = coverImagePixabayId
+                            val imageUrl = coverImageUrl
+                            if (!imageUrl.isNullOrBlank() && pixabayId != null) {
+                                val addResult = repository.addGoalImageFromPixabay(
+                                    goalId = newGoal.id,
+                                    pixabayId = pixabayId,
+                                    imageUrl = imageUrl,
+                                    tags = coverImageTags,
+                                    pixabayUser = coverImagePixabayUser
+                                )
+                                if (addResult.isSuccess) {
+                                    repository.setGoalCover(newGoal.id, imageUrl)
+                                }
+                            }
+
                             isSubmitting = false
                             Toast.makeText(context, "Vizyon başarıyla oluşturuldu!", Toast.LENGTH_SHORT).show()
-                            navController.popBackStack()
-                        }.onFailure { err ->
+                            // Vizyonun slayt/videosunu oluşturma adımı ekleme sırasında hiç
+                            // yapılmıyordu — kullanıcıyı doğrudan Reels/Video editörüne
+                            // yönlendirip bunu tamamlatıyoruz (mevcut mimaride "Vizyonu İzle"
+                            // önce vision_video_url'e bakıyor, o yüzden burası birincil akış).
+                            // create_vision ekranını geri yığından çıkarıyoruz ki editörden
+                            // "kapat" ile geri dönüşte create ekranına değil, bir önceki
+                            // listeye dönsün.
+                            navController.navigate(Screen.VideoEditor.createRoute(newGoal.id)) {
+                                popUpTo(Screen.CreateVision.route) { inclusive = true }
+                            }
+                        } else {
                             isSubmitting = false
-                            val msg = err.message ?: ""
+                            val err = createResult.exceptionOrNull()
+                            val msg = err?.message ?: ""
                             errorMessage = when {
                                 msg.contains("title_required", ignoreCase = true) -> "Başlık girmelisiniz"
                                 msg.contains("title_too_long", ignoreCase = true) -> "Başlık çok uzun"
                                 msg.contains("description_too_long", ignoreCase = true) -> "Açıklama çok uzun"
-                                else -> err.message ?: "Vizyon oluşturulamadı"
+                                else -> err?.message ?: "Vizyon oluşturulamadı"
                             }
                         }
                     }

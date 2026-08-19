@@ -66,6 +66,7 @@ fun ProfileScreen(
     onAddFriendClick: () -> Unit = {},
     onDiaryJournalClick: () -> Unit = {},
     onUpgradeClick: () -> Unit = {},
+    onOpenReels: (List<io.lunosfer.dreamap.data.model.Goal>, Int) -> Unit = { _, _ -> },
     viewModel: ProfileViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -230,7 +231,10 @@ fun ProfileScreen(
                                     ProfileGridItem(
                                         imageUrl = goal.coverImageUrl,
                                         title = goal.title,
-                                        onClick = { /* Handle goal click */ }
+                                        onClick = {
+                                            val index = s.visions.indexOfFirst { it.id == goal.id }.coerceAtLeast(0)
+                                            onOpenReels(s.visions, index)
+                                        }
                                     )
                                 }
                             }
@@ -256,7 +260,10 @@ fun ProfileScreen(
                                     ProfileGridItem(
                                         imageUrl = goal.coverImageUrl,
                                         title = goal.title,
-                                        onClick = { /* Handle goal click */ }
+                                        onClick = {
+                                            val index = s.savedVisions.indexOfFirst { it.id == goal.id }.coerceAtLeast(0)
+                                            onOpenReels(s.savedVisions, index)
+                                        }
                                     )
                                 }
                             }

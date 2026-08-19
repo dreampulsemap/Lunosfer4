@@ -55,7 +55,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(),
     onDreamClick: (Long) -> Unit = {},
     onOpenComposer: () -> Unit = {},
-    onOpenViewer: (String) -> Unit = {}
+    onOpenViewer: (String) -> Unit = {},
+    onOpenReels: (List<Goal>, Int) -> Unit = { _, _ -> }
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -176,10 +177,20 @@ private fun HomeFeedList(
             }
         }
 
+        val visionGoals = items.filterIsInstance<FeedItem.VisionItem>().map { it.goal }
+
         items(items, key = { it.createdAt + it.hashCode() }) { feedItem ->
             when (feedItem) {
                 is FeedItem.DreamItem -> DreamFeedCard(feedItem.dream, onDreamClick)
-                is FeedItem.VisionItem -> VisionFeedCard(feedItem.goal)
+                is FeedItem.VisionItem -> {
+                    VisionFeedCard(
+                        goal = feedItem.goal,
+                        onClick = {
+                            val index = visionGoals.indexOfFirst { it.id == feedItem.goal.id }.coerceAtLeast(0)
+                            onOpenReels(visionGoals, index)
+                        }
+                    )
+                }
             }
         }
     }
@@ -654,9 +665,9 @@ private fun DreamAnalysisPage(dream: Dream) {
 
 /** goals tablosundan bir kart — GoalCard.jsx'in ön yüzüyle aynı alanlar (title, cover, completion). */
 @Composable
-private fun VisionFeedCard(goal: Goal) {
+private fun VisionFeedCard(goal: Goal, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Void900),
         border = BorderStroke(1.dp, AstralGold.copy(alpha = 0.2f))

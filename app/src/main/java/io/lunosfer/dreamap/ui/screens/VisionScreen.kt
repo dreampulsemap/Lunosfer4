@@ -40,9 +40,11 @@ import io.lunosfer.dreamap.ui.viewmodel.VisionViewModel
 @Composable
 fun VisionScreen(
     onGoalClick: (String) -> Unit = {},
+    onOpenReels: (List<Goal>, Int) -> Unit = { _, _ -> },
     viewModel: VisionViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val ownActiveGoals by viewModel.ownActiveGoals.collectAsState()
     val compassState by viewModel.compassState.collectAsState()
     val dailySeeds by viewModel.dailySeeds.collectAsState()
     val seedGeneratingMap by viewModel.seedGeneratingMap.collectAsState()
@@ -55,13 +57,15 @@ fun VisionScreen(
             is UiState.Error -> VisionError(message = current.message, onRetry = viewModel::retry)
             is UiState.Success -> VisionContent(
                 goals = current.data,
+                ownActiveGoals = ownActiveGoals,
                 compassState = compassState,
                 dailySeeds = dailySeeds,
                 seedGeneratingMap = seedGeneratingMap,
                 onFetchCompass = viewModel::fetchDailyCompass,
                 onGenerateSeed = viewModel::generateSeedForGoal,
                 onToggleSeed = viewModel::toggleSeedCompletion,
-                onGoalClick = onGoalClick
+                onGoalClick = onGoalClick,
+                onOpenReels = onOpenReels
             )
         }
     }
@@ -93,16 +97,16 @@ private fun VisionError(message: String, onRetry: () -> Unit) {
 @Composable
 private fun VisionContent(
     goals: List<Goal>,
+    ownActiveGoals: List<Goal>,
     compassState: CompassUiState,
     dailySeeds: List<DailySeedItem>,
     seedGeneratingMap: Map<String, Boolean>,
     onFetchCompass: () -> Unit,
     onGenerateSeed: (String) -> Unit,
     onToggleSeed: (DailySeedItem) -> Unit,
-    onGoalClick: (String) -> Unit
+    onGoalClick: (String) -> Unit,
+    onOpenReels: (List<Goal>, Int) -> Unit
 ) {
-    val activeGoals = remember(goals) { goals.filter { it.status == "active" || it.status == null } }
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -121,7 +125,7 @@ private fun VisionContent(
         // 2) Günlük Tohumlar ("Bugün Yapman Gerekenler")
         item {
             DailySeedsSection(
-                activeGoals = activeGoals,
+                activeGoals = ownActiveGoals,
                 dailySeeds = dailySeeds,
                 seedGeneratingMap = seedGeneratingMap,
                 onGenerateSeed = onGenerateSeed,
@@ -177,7 +181,13 @@ private fun VisionContent(
                 ) {
                     for (goal in rowGoals) {
                         Box(modifier = Modifier.weight(1f)) {
-                            VisionGridCard(goal = goal, onClick = { onGoalClick(goal.id) })
+                            VisionGridCard(
+                                goal = goal,
+                                onClick = {
+                                    val index = goals.indexOfFirst { it.id == goal.id }.coerceAtLeast(0)
+                                    onOpenReels(goals, index)
+                                }
+                            )
                         }
                     }
                     if (rowGoals.size == 1) {

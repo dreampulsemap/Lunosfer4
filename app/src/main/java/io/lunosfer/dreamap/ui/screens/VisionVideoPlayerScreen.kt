@@ -95,13 +95,14 @@ fun VisionVideoPlayerScreen(
 }
 
 @Composable
-private fun VisionVideoPlayerContent(
+internal fun VisionVideoPlayerContent(
     state: VisionVideoPlayerUiState.Content,
     onClose: () -> Unit,
     onEdit: () -> Unit,
     onToggleMana: () -> Unit,
     onDoubleTapLike: () -> Unit,
-    onToggleSave: () -> Unit
+    onToggleSave: () -> Unit,
+    isActive: Boolean = true
 ) {
     val context = LocalContext.current
     val videoUrl = state.goal.visionVideoUrl ?: return
@@ -122,8 +123,11 @@ private fun VisionVideoPlayerContent(
     DisposableEffect(videoUrl) {
         onDispose { exoPlayer.release() }
     }
-    LaunchedEffect(isPlaying) {
-        if (isPlaying) exoPlayer.play() else exoPlayer.pause()
+    // isActive: Reels pager'da bu sayfa görünür DEĞİLKEN video sesi/oynatması
+    // arka planda devam etmesin diye eklendi. Tek-vizyon ekranında (isActive
+    // varsayılan true) davranış eskisiyle birebir aynı kalır.
+    LaunchedEffect(isPlaying, isActive) {
+        if (isPlaying && isActive) exoPlayer.play() else exoPlayer.pause()
     }
 
     LaunchedEffect(showHeartBurst) {

@@ -50,6 +50,14 @@ sealed class Screen(val route: String) {
     }
     object SpiritualTools : Screen("spiritual_tools")
 
+    // Tam ekran, dikey kaydırmalı Reels görüntüleyici — Ana Sayfa/Keşfet/
+    // Vizyon/Profil'deki vizyon kartlarının HEPSİ buraya açılır (tek tık,
+    // aşağı kaydırınca sıradaki vizyona geçer). Liste + başlangıç index'i
+    // ReelsQueueHolder üzerinden taşınır (bkz. o dosyadaki gerekçe).
+    // Sayfa başına video varsa VisionVideoPlayerContent, yoksa slayt varsa
+    // SlidesViewerContent, o da yoksa düz kapak görseli render eder.
+    object VisionReels : Screen("vision_reels")
+
     // Tam ekran Reels editörü — bottom nav/top bar'ın GÖRÜNMEDİĞİ route.
     // Goal her zaman önceden var (GoalDetailScreen'den açılıyor).
     object VideoEditor : Screen("video_editor/{goalId}") {

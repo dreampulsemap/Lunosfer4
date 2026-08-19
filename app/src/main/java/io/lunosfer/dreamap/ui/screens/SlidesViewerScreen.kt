@@ -123,7 +123,7 @@ fun SlidesViewerScreen(
 // yüzünden derleme kırılmasın.
 
 @Composable
-private fun SlidesViewerContent(
+internal fun SlidesViewerContent(
     state: SlidesViewerUiState.Content,
     onPause: () -> Unit,
     onResume: () -> Unit,

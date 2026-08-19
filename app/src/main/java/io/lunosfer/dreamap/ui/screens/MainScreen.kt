@@ -97,9 +97,17 @@ fun MainScreen(
         Screen.VideoEditor.route,
         Screen.VisionVideoPlayer.route,
         Screen.SlidesViewer.route,
-        Screen.SlideCreator.route
+        Screen.SlideCreator.route,
+        Screen.VisionReels.route
     )
     val showTopBottomBars = currentRoute != Screen.Auth.route && currentRoute !in fullScreenRoutes
+
+    // Ana Sayfa / Keşfet / Vizyon / Profil'deki HER vizyon kartı için ortak
+    // "tek tıkla aç, aşağı kaydırınca sıradakine geç" giriş noktası.
+    val openReels: (List<io.lunosfer.dreamap.data.model.Goal>, Int) -> Unit = { goals, index ->
+        io.lunosfer.dreamap.ui.viewmodel.ReelsQueueHolder.set(goals, index)
+        navController.navigate(Screen.VisionReels.route)
+    }
 
     Scaffold(
         topBar = {
@@ -142,14 +150,18 @@ fun MainScreen(
                 HomeScreen(
                     onDreamClick = { id -> navController.navigate(Screen.DreamDetail.createRoute(id)) },
                     onOpenComposer = { navController.navigate(Screen.DiaryComposer.route) },
-                    onOpenViewer = { userId -> navController.navigate(Screen.DiaryStoryViewer.routeFor(userId)) }
+                    onOpenViewer = { userId -> navController.navigate(Screen.DiaryStoryViewer.routeFor(userId)) },
+                    onOpenReels = openReels
                 )
             }
             composable(Screen.Explore.route) {
-                ExploreScreen(onGoalClick = { goalId -> navController.navigate(Screen.GoalDetail.createRoute(goalId)) })
+                ExploreScreen(onOpenReels = openReels)
             }
             composable(Screen.Vision.route) {
-                VisionScreen(onGoalClick = { goalId -> navController.navigate(Screen.GoalDetail.createRoute(goalId)) })
+                VisionScreen(
+                    onGoalClick = { goalId -> navController.navigate(Screen.GoalDetail.createRoute(goalId)) },
+                    onOpenReels = openReels
+                )
             }
             composable(Screen.Messages.route) { 
                 MessagesScreen(navController = navController, onLoginClick = { navController.navigate(Screen.Auth.route) }) 
@@ -222,6 +234,13 @@ fun MainScreen(
                 val goalId = backStackEntry.arguments?.getString("goalId") ?: return@composable
                 VideoEditorScreen(goalId = goalId, onClose = { navController.popBackStack() })
             }
+            composable(Screen.VisionReels.route) {
+                VisionReelsScreen(
+                    onClose = { navController.popBackStack() },
+                    onOpenGoalDetail = { goalId -> navController.navigate(Screen.GoalDetail.createRoute(goalId)) },
+                    onEditVideo = { goalId -> navController.navigate(Screen.VideoEditor.createRoute(goalId)) }
+                )
+            }
             composable(Screen.Profile.route) {
                 val currentUserId = supabaseClient.auth.currentSessionOrNull()?.user?.id ?: ""
                 ProfileScreen(
@@ -239,7 +258,8 @@ fun MainScreen(
                     onUpgradeClick = {
                         billingSheetTab = BillingTab.PREMIUM
                         showBillingSheet = true
-                    }
+                    },
+                    onOpenReels = openReels
                 )
             }
             composable(Screen.AddFriend.route) {
@@ -327,15 +347,21 @@ fun TopBar(
             titleContentColor = AstralGold
         ),
         title = {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                io.lunosfer.dreamap.ui.components.AutoSizeText(
                     text = "LUNOSFER",
+                    maxFontSize = 18.sp,
+                    minFontSize = 11.sp,
                     style = androidx.compose.ui.text.TextStyle(
                         brush = Brush.linearGradient(listOf(AstralGold, AstralAmber)),
                         fontFamily = SerifFontFamily,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp,
-                        fontSize = 18.sp
+                        letterSpacing = 1.5.sp
                     )
                 )
             }
