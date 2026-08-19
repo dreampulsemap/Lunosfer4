@@ -408,6 +408,7 @@
     <string name="slide_creator_uploading">Yükleniyor…</string>
     <string name="slide_creator_add_slide">Slayt Ekle</string>
     <string name="slide_creator_add_dialog_title">Görsel / Video Ekle</string>
+    <string name="slide_creator_pick_device_video">Cihazdan Video Seç</string>
     <string name="slide_creator_pick_device">Cihazdan Görsel Seç</string>
     <string name="slide_creator_pick_pixabay_image">Pixabay\'da Görsel Ara</string>
     <string name="slide_creator_pick_pixabay_video">Pixabay\'da Video Ara</string>
