@@ -36,11 +36,12 @@ import kotlinx.coroutines.launch
 fun PixabayMediaPickerDialog(
     onDismissRequest: () -> Unit,
     onImageSelected: (pixabayId: Long, imageUrl: String, tags: String, user: String) -> Unit,
-    onVideoSelected: ((pixabayId: Long, videoUrl: String, tags: String, user: String) -> Unit)? = null
+    onVideoSelected: ((pixabayId: Long, videoUrl: String, tags: String, user: String, durationSeconds: Int) -> Unit)? = null,
+    initialMediaType: String = "image"
 ) {
     val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("nebula abstract") }
-    var mediaType by remember { mutableStateOf("image") } // "image" or "video"
+    var mediaType by remember { mutableStateOf(initialMediaType) } // "image" or "video"
     var isLoading by remember { mutableStateOf(false) }
 
     var imageResults by remember { mutableStateOf<List<PixabayHit>>(emptyList()) }
@@ -231,7 +232,7 @@ fun PixabayMediaPickerDialog(
                                         .border(1.dp, AetherViolet.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
                                         .clickable {
                                             if (onVideoSelected != null && videoUrl.isNotBlank()) {
-                                                onVideoSelected(hit.id, videoUrl, hit.tags.joinToString(", "), hit.user)
+                                                onVideoSelected(hit.id, videoUrl, hit.tags.joinToString(", "), hit.user, hit.duration)
                                             } else {
                                                 // Fallback to image thumb
                                                 onImageSelected(hit.id, thumb ?: "", hit.tags.joinToString(", "), hit.user)
