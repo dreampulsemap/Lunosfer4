@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 
 const val MAX_GOAL_SLIDES = 20
 const val DEFAULT_IMAGE_DURATION_SECONDS = 2
+const val MAX_VIDEO_BYTES = 50L * 1024 * 1024 // 50 MB — tüm dosya belleğe okunuyor, akışlı yükleme yok
 
 sealed class SlideCreatorUiState {
     object Loading : SlideCreatorUiState()
@@ -85,6 +86,61 @@ class SlideCreatorViewModel(
             } catch (e: Exception) {
                 setError(e.message ?: "Yükleme başarısız oldu.")
             }
+        }
+    }
+
+    /**
+     * Cihazdan seçilen videoyu yükler. Süre, dosyanın kendi gerçek
+     * uzunluğundan (MediaMetadataRetriever ile, yerel — ağ isteği gerekmez)
+     * okunur; Pixabay videolarındaki "video uzunluğu kadar" davranışıyla
+     * tutarlı. MAX_VIDEO_BYTES üstü dosyalar bellek taşmasını önlemek için
+     * reddedilir (tüm dosya belleğe okunuyor, akışlı yükleme yok).
+     */
+    fun addSlideFromDeviceVideo(context: Context, uri: Uri) {
+        val current = _state.value as? SlideCreatorUiState.Content ?: return
+        if (!current.canAddMore) {
+            _state.value = current.copy(error = "En fazla $MAX_GOAL_SLIDES slayt ekleyebilirsin.")
+            return
+        }
+        _state.value = current.copy(isUploading = true, error = null)
+
+        viewModelScope.launch {
+            try {
+                val sizeBytes = context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1L
+                if (sizeBytes > MAX_VIDEO_BYTES) {
+                    setError("Video çok büyük (en fazla ${MAX_VIDEO_BYTES / (1024 * 1024)} MB).")
+                    return@launch
+                }
+
+                val durationSeconds = probeVideoDurationSeconds(context, uri)
+
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                if (bytes == null || bytes.isEmpty()) {
+                    setError("Video okunamadı.")
+                    return@launch
+                }
+                val fileName = "slide_${System.currentTimeMillis()}.mp4"
+                repository.uploadSlideImage(bytes, fileName).onSuccess { url ->
+                    createSlideWithImage(imageUrl = url, durationSeconds = durationSeconds)
+                }.onFailure { err ->
+                    setError(err.message ?: "Yükleme başarısız oldu.")
+                }
+            } catch (e: Exception) {
+                setError(e.message ?: "Yükleme başarısız oldu.")
+            }
+        }
+    }
+
+    private fun probeVideoDurationSeconds(context: Context, uri: Uri): Int {
+        return try {
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
+            val ms = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            retriever.release()
+            val seconds = (ms / 1000L).toInt()
+            seconds.coerceIn(1, 15)
+        } catch (_: Exception) {
+            DEFAULT_IMAGE_DURATION_SECONDS // süre okunamazsa güvenli varsayılana düş
         }
     }
 
