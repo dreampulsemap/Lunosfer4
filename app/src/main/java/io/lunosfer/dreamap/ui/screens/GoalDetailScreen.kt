@@ -48,7 +48,10 @@ fun GoalDetailScreen(
     goalId: String,
     onBack: () -> Unit,
     onUserClick: ((String) -> Unit)? = null,
-    onOpenReelsEditor: ((String) -> Unit)? = null
+    onOpenReelsEditor: ((String) -> Unit)? = null,
+    onWatchVideo: ((String) -> Unit)? = null,
+    onWatchSlides: ((String) -> Unit)? = null,
+    onEditSlides: ((String) -> Unit)? = null
 ) {
     val factory = remember(goalId) { GoalDetailViewModel.Factory(goalId) }
     val viewModel: GoalDetailViewModel = viewModel(factory = factory)
@@ -161,7 +164,7 @@ private fun GoalDetailContent(
             onImageSelected = { pixabayId, imageUrl, tags, user ->
                 onAddPixabayImage(pixabayId, imageUrl, tags, user)
             },
-            onVideoSelected = { pixabayId, videoUrl, tags, user ->
+            onVideoSelected = { pixabayId, videoUrl, tags, user, _ ->
                 onAddPixabayImage(pixabayId, videoUrl, tags, user)
             }
         )
@@ -271,6 +274,29 @@ private fun GoalDetailContent(
                     )
                 }
 
+                // "Vizyonu İzle" — video varsa VisionVideoPlayer'a, yoksa
+                // (eski/video'suz vizyon) slayt fallback'ine gider. Web'deki
+                // GoalDetailModal.jsx'teki tek giriş noktasıyla aynı mantık.
+                val hasVideo = !goal.visionVideoUrl.isNullOrBlank()
+                val hasSlides = (goal.slideCount ?: 0) > 0
+                if ((hasVideo && onWatchVideo != null) || (!hasVideo && hasSlides && onWatchSlides != null)) {
+                    Button(
+                        onClick = {
+                            if (hasVideo) onWatchVideo?.invoke(goalId) else onWatchSlides?.invoke(goalId)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary500)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.goal_detail_watch_vision),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+
                 // Cover & Gallery Management Bar (Owner)
                 if (isOwner) {
                     Row(
@@ -301,6 +327,18 @@ private fun GoalDetailContent(
                                             if (goal.visionVideoUrl.isNullOrBlank()) R.string.goalDetail_addReel else R.string.goalDetail_editReel
                                         ),
                                         fontSize = 10.sp, color = BrandPrimary500
+                                    )
+                                },
+                                colors = AssistChipDefaults.assistChipColors(containerColor = Void800)
+                            )
+                        }
+                        if (onEditSlides != null) {
+                            AssistChip(
+                                onClick = { onEditSlides(goal.id) },
+                                label = {
+                                    Text(
+                                        stringResource(R.string.goal_detail_edit_slides),
+                                        fontSize = 10.sp, color = AstralGold
                                     )
                                 },
                                 colors = AssistChipDefaults.assistChipColors(containerColor = Void800)

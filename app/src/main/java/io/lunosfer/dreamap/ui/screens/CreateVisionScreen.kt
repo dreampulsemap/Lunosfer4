@@ -186,7 +186,7 @@ fun CreateVisionScreen(
                     onImageSelected = { _, url, _, _ ->
                         coverImageUrl = url
                     },
-                    onVideoSelected = { _, url, _, _ ->
+                    onVideoSelected = { _, url, _, _, _ ->
                         coverImageUrl = url
                     }
                 )
