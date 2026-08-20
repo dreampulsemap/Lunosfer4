@@ -90,14 +90,16 @@ class VisionRepository {
 
     suspend fun uploadSlideImage(byteArray: ByteArray, fileName: String): Result<String> = runCatching {
         val uniquePath = "${java.util.UUID.randomUUID()}_$fileName"
+        val mimeType = if (fileName.endsWith(".mp4", ignoreCase = true))
+            io.ktor.http.ContentType.Video.MP4 else io.ktor.http.ContentType.Image.JPEG
         try {
             val bucket = io.lunosfer.dreamap.supabase.supabaseClient.storage.from("goal-images")
-            bucket.upload(uniquePath, byteArray) { upsert = true }
+            bucket.upload(uniquePath, byteArray) { upsert = true; contentType = mimeType }
             bucket.publicUrl(uniquePath)
         } catch (e: Exception) {
             try {
                 val bucket = io.lunosfer.dreamap.supabase.supabaseClient.storage.from("dreams")
-                bucket.upload(uniquePath, byteArray) { upsert = true }
+                bucket.upload(uniquePath, byteArray) { upsert = true; contentType = mimeType }
                 bucket.publicUrl(uniquePath)
             } catch (_: Exception) { throw e }
         }
