@@ -85,6 +85,12 @@ fun MainScreen(
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
             io.lunosfer.dreamap.data.repository.BillingRepository.connectAndLoadProducts()
+            // MainActivity.onCreate() FCM token'ını login OLMADAN önce de
+            // kaydetmeyi dener (auth interceptor'da token yok, 401 alıp
+            // sessizce yutuluyor) — burada login gerçekleştiği anda
+            // TEKRAR deniyoruz, uygulama yeniden başlatılmadan da push
+            // bildirimleri çalışsın diye.
+            io.lunosfer.dreamap.service.LunosferMessagingService.registerCurrentFcmToken()
         }
     }
 
