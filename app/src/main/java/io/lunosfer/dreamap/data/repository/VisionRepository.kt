@@ -141,6 +141,15 @@ class VisionRepository {
         Unit
     }
 
+    /** @return true ise zaten daha önce bildirilmişti (backend "already_reported"), false ise yeni bildirim. */
+    suspend fun reportGoal(goalId: String, reason: GoalReportReason, note: String? = null): Result<Boolean> = runCatching {
+        val res = api.reportGoal(ReportGoalRequest(goalId = goalId, reason = reason.apiValue, note = note))
+        if (!res.success && res.error != null) {
+            throw Exception(res.error)
+        }
+        res.alreadyReported
+    }
+
     // --- Goal Cover & Gallery Media ---
 
     suspend fun generateGoalCover(goalId: String?, title: String?, description: String?): Result<String> = runCatching {
