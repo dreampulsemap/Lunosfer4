@@ -174,6 +174,9 @@ interface LunosferApi {
     @HTTP(method = "DELETE", path = "api/goals/comment", hasBody = true)
     suspend fun deleteGoalComment(@Body request: io.lunosfer.dreamap.data.model.DeleteGoalCommentRequest): io.lunosfer.dreamap.data.model.GenericSuccessResponse
 
+    @POST("api/goals/report")
+    suspend fun reportGoal(@Body request: io.lunosfer.dreamap.data.model.ReportGoalRequest): io.lunosfer.dreamap.data.model.ReportGoalResponse
+
     // --- Vizyon Slaytları ---
 
     @GET("api/goals/slides/list")
