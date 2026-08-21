@@ -458,6 +458,19 @@
     <string name="error_slides_not_found">This vision has no slides.</string>
     <string name="error_slides_load">Failed to load slides</string>
     <string name="error_video_not_found">This vision has no video.</string>
+    <string name="vision_report_action">Report</string>
+    <string name="vision_report_title">Report this vision</string>
+    <string name="vision_report_subtitle">Help us understand what\'s wrong. Your report is anonymous to the person who shared it.</string>
+    <string name="vision_report_reason_spam">Spam</string>
+    <string name="vision_report_reason_inappropriate">Inappropriate content</string>
+    <string name="vision_report_reason_harassment">Harassment or bullying</string>
+    <string name="vision_report_reason_misinformation">Misinformation</string>
+    <string name="vision_report_reason_hate_speech">Hate speech</string>
+    <string name="vision_report_reason_other">Other</string>
+    <string name="vision_report_note_placeholder">Add a note (optional)</string>
+    <string name="vision_report_submit">Submit report</string>
+    <string name="vision_report_already_reported">You already reported this vision.</string>
+    <string name="vision_report_success">Report submitted. Thank you.</string>
     <string name="slide_creator_title">Slides</string>
     <string name="slide_creator_uploading">Uploading…</string>
     <string name="slide_creator_add_slide">Add Slide</string>
@@ -478,6 +491,7 @@
     <string name="generic_edit_cd">Edit</string>
     <string name="generic_close_cd">Close</string>
     <string name="generic_delete_cd">Delete</string>
+    <string name="generic_more_options_cd">More options</string>
     <string name="goalDetail_addReel">🎬 Add Reel</string>
     <string name="goalDetail_editReel">🎬 Edit Reel</string>
 </resources>
