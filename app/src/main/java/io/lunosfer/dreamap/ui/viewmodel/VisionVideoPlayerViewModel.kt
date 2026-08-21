@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.lunosfer.dreamap.data.model.Goal
+import io.lunosfer.dreamap.data.model.GoalComment
+import io.lunosfer.dreamap.data.model.GoalReportReason
 import io.lunosfer.dreamap.data.repository.VisionRepository
 import io.lunosfer.dreamap.supabase.supabaseClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,12 +16,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * components/VisionVideoPlayer.jsx'in Android karşılığı — ama BİLİNÇLİ
- * olarak küçük tutuldu: web'deki kaydırarak sıradaki videoya geçme kuyruğu,
- * yorum sheet'i, paylaşım ve bildir menüsü bu ilk sürümde YOK. Sadece: tek
- * vizyonun videosu, oynat/duraklat, çift dokununca beğen, mana ver/kaldır,
- * kaydet, (sahipse) düzenlemeye dön. GoalDetailScreen'deki "Vizyonu İzle"
- * butonundan, goal.visionVideoUrl doluysa buraya gelinir.
+ * components/VisionVideoPlayer.jsx'in Android karşılığı. Tek vizyonun
+ * videosu, oynat/duraklat, çift dokununca beğen, mana ver/kaldır, kaydet,
+ * (sahipse) düzenlemeye dön, yorumlar (bottom sheet) ve bildirme (rapor).
+ * GoalDetailScreen'deki "Vizyonu İzle" butonundan, goal.visionVideoUrl
+ * doluysa buraya gelinir.
  */
 sealed class VisionVideoPlayerUiState {
     object Loading : VisionVideoPlayerUiState()
@@ -29,7 +30,17 @@ sealed class VisionVideoPlayerUiState {
         val hasReacted: Boolean = false,
         val believersCount: Int = 0,
         val hasSaved: Boolean = false,
-        val actionError: String? = null
+        val actionError: String? = null,
+        // --- Yorumlar (bottom sheet) ---
+        val showComments: Boolean = false,
+        val comments: List<GoalComment> = emptyList(),
+        val isLoadingComments: Boolean = false,
+        val isSubmittingComment: Boolean = false,
+        val commentsLoaded: Boolean = false,
+        // --- Bildir (rapor) ---
+        val showReportSheet: Boolean = false,
+        val isSubmittingReport: Boolean = false,
+        val reportResultToast: Boolean? = null
     ) : VisionVideoPlayerUiState()
     data class Error(val message: String) : VisionVideoPlayerUiState()
 }
@@ -127,6 +138,97 @@ class VisionVideoPlayerViewModel(
                 _state.value = latest.copy(hasSaved = wasSaved, actionError = err.message)
             }
         }
+    }
+
+    // --- Yorumlar ---
+
+    fun openComments() {
+        val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
+        if (current.commentsLoaded) {
+            _state.value = current.copy(showComments = true)
+            return
+        }
+        _state.value = current.copy(showComments = true, isLoadingComments = true)
+        viewModelScope.launch {
+            repository.getGoalComments(goalId).onSuccess { comments ->
+                val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onSuccess
+                _state.value = latest.copy(comments = comments, isLoadingComments = false, commentsLoaded = true)
+            }.onFailure {
+                val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onFailure
+                _state.value = latest.copy(isLoadingComments = false, commentsLoaded = true)
+            }
+        }
+    }
+
+    fun closeComments() {
+        val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
+        _state.value = current.copy(showComments = false)
+    }
+
+    fun addComment(content: String) {
+        if (content.isBlank()) return
+        val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
+        _state.value = current.copy(isSubmittingComment = true)
+        viewModelScope.launch {
+            repository.createGoalComment(goalId, content).onSuccess { comment ->
+                val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onSuccess
+                _state.value = latest.copy(
+                    comments = latest.comments + comment,
+                    isSubmittingComment = false
+                )
+            }.onFailure { err ->
+                val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onFailure
+                _state.value = latest.copy(isSubmittingComment = false, actionError = err.message)
+            }
+        }
+    }
+
+    fun deleteComment(commentId: String) {
+        val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
+        val removed = current.comments.firstOrNull { it.id == commentId }
+        _state.value = current.copy(comments = current.comments.filterNot { it.id == commentId })
+        viewModelScope.launch {
+            repository.deleteGoalComment(commentId).onFailure {
+                val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onFailure
+                if (removed == null) return@onFailure
+                _state.value = latest.copy(comments = latest.comments + removed)
+            }
+        }
+    }
+
+    // --- Bildir (Rapor) ---
+
+    fun openReportSheet() {
+        val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
+        _state.value = current.copy(showReportSheet = true)
+    }
+
+    fun closeReportSheet() {
+        val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
+        _state.value = current.copy(showReportSheet = false)
+    }
+
+    fun submitReport(reason: GoalReportReason, note: String? = null) {
+        val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
+        _state.value = current.copy(isSubmittingReport = true)
+        viewModelScope.launch {
+            repository.reportGoal(goalId, reason, note).onSuccess { alreadyReported ->
+                val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onSuccess
+                _state.value = latest.copy(
+                    isSubmittingReport = false,
+                    showReportSheet = false,
+                    reportResultToast = alreadyReported
+                )
+            }.onFailure { err ->
+                val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onFailure
+                _state.value = latest.copy(isSubmittingReport = false, actionError = err.message)
+            }
+        }
+    }
+
+    fun consumeReportResultToast() {
+        val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
+        _state.value = current.copy(reportResultToast = null)
     }
 
     class Factory(private val goalId: String) : ViewModelProvider.Factory {

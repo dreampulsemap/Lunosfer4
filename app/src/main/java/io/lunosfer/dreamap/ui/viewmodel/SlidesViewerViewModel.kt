@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.lunosfer.dreamap.data.model.Goal
+import io.lunosfer.dreamap.data.model.GoalComment
+import io.lunosfer.dreamap.data.model.GoalReportReason
 import io.lunosfer.dreamap.data.model.GoalSlide
 import io.lunosfer.dreamap.data.model.UserProfile
 import io.lunosfer.dreamap.data.repository.VisionRepository
@@ -21,10 +23,9 @@ import kotlinx.coroutines.launch
  * components/SlidesViewer.jsx'in Android karşılığı — "Vizyon Slaytları",
  * oto-oynatan, Instagram/TikTok Stories tarzı tam ekran görüntüleyici.
  *
- * Kapsam bilerek sınırlı tutuldu: web'deki yorum sheet'i, bildir sheet'i ve
- * üç nokta menüsü (Düzenle) bu ilk sürümde YOK — sadece izleme deneyimi +
- * mana ver/kaldır + slayt kaydet + (sahipse) slayt sil. Gerekirse ayrı bir
- * iş olarak eklenebilir.
+ * Yorumlar (GoalDetailScreen'deki ile aynı API, bottom sheet olarak) ve
+ * bildirme (rapor, pages/api/goals/report.js ile birebir eşleşen şema)
+ * akışlarını da içerir.
  */
 sealed class SlidesViewerUiState {
     object Loading : SlidesViewerUiState()
@@ -39,7 +40,19 @@ sealed class SlidesViewerUiState {
         val isPaused: Boolean = false,
         val hasReacted: Boolean = false,
         val believersCount: Int = 0,
-        val actionError: String? = null
+        val actionError: String? = null,
+        // --- Yorumlar (bottom sheet) ---
+        val showComments: Boolean = false,
+        val comments: List<GoalComment> = emptyList(),
+        val isLoadingComments: Boolean = false,
+        val isSubmittingComment: Boolean = false,
+        val commentsLoaded: Boolean = false,
+        // --- Bildir (rapor) ---
+        val showReportSheet: Boolean = false,
+        val isSubmittingReport: Boolean = false,
+        // reportResultToast: null = gösterme, true = "zaten bildirilmişti",
+        // false = "bildirimin alındı" — ikisi de success, farklı mesaj.
+        val reportResultToast: Boolean? = null
     ) : SlidesViewerUiState() {
         val currentSlide: GoalSlide? get() = slides.getOrNull(currentIndex)
     }
@@ -237,6 +250,106 @@ class SlidesViewerViewModel(
     fun clearActionError() {
         val current = _state.value as? SlidesViewerUiState.Content ?: return
         _state.value = current.copy(actionError = null)
+    }
+
+    // --- Yorumlar ---
+    // GoalDetailScreen'deki ile birebir aynı API (getGoalComments /
+    // createGoalComment / deleteGoalComment) — burada bottom sheet olarak
+    // sunuluyor.
+
+    fun openComments() {
+        val current = _state.value as? SlidesViewerUiState.Content ?: return
+        pauseTimer()
+        if (current.commentsLoaded) {
+            _state.value = current.copy(showComments = true)
+            return
+        }
+        _state.value = current.copy(showComments = true, isLoadingComments = true)
+        viewModelScope.launch {
+            repository.getGoalComments(goalId).onSuccess { comments ->
+                val latest = _state.value as? SlidesViewerUiState.Content ?: return@onSuccess
+                _state.value = latest.copy(comments = comments, isLoadingComments = false, commentsLoaded = true)
+            }.onFailure {
+                val latest = _state.value as? SlidesViewerUiState.Content ?: return@onFailure
+                _state.value = latest.copy(isLoadingComments = false, commentsLoaded = true)
+            }
+        }
+    }
+
+    fun closeComments() {
+        val current = _state.value as? SlidesViewerUiState.Content ?: return
+        _state.value = current.copy(showComments = false)
+        resumeTimer()
+    }
+
+    fun addComment(content: String) {
+        if (content.isBlank()) return
+        val current = _state.value as? SlidesViewerUiState.Content ?: return
+        _state.value = current.copy(isSubmittingComment = true)
+        viewModelScope.launch {
+            repository.createGoalComment(goalId, content).onSuccess { comment ->
+                val latest = _state.value as? SlidesViewerUiState.Content ?: return@onSuccess
+                _state.value = latest.copy(
+                    comments = latest.comments + comment,
+                    isSubmittingComment = false
+                )
+            }.onFailure { err ->
+                val latest = _state.value as? SlidesViewerUiState.Content ?: return@onFailure
+                _state.value = latest.copy(isSubmittingComment = false, actionError = err.message)
+            }
+        }
+    }
+
+    fun deleteComment(commentId: String) {
+        val current = _state.value as? SlidesViewerUiState.Content ?: return
+        val removed = current.comments.firstOrNull { it.id == commentId }
+        // Optimistic — geri alma gerekirse removed'i ekliyoruz.
+        _state.value = current.copy(comments = current.comments.filterNot { it.id == commentId })
+        viewModelScope.launch {
+            repository.deleteGoalComment(commentId).onFailure {
+                val latest = _state.value as? SlidesViewerUiState.Content ?: return@onFailure
+                if (removed == null) return@onFailure
+                _state.value = latest.copy(comments = latest.comments + removed)
+            }
+        }
+    }
+
+    // --- Bildir (Rapor) ---
+
+    fun openReportSheet() {
+        val current = _state.value as? SlidesViewerUiState.Content ?: return
+        pauseTimer()
+        _state.value = current.copy(showReportSheet = true)
+    }
+
+    fun closeReportSheet() {
+        val current = _state.value as? SlidesViewerUiState.Content ?: return
+        _state.value = current.copy(showReportSheet = false)
+        resumeTimer()
+    }
+
+    fun submitReport(reason: GoalReportReason, note: String? = null) {
+        val current = _state.value as? SlidesViewerUiState.Content ?: return
+        _state.value = current.copy(isSubmittingReport = true)
+        viewModelScope.launch {
+            repository.reportGoal(goalId, reason, note).onSuccess { alreadyReported ->
+                val latest = _state.value as? SlidesViewerUiState.Content ?: return@onSuccess
+                _state.value = latest.copy(
+                    isSubmittingReport = false,
+                    showReportSheet = false,
+                    reportResultToast = alreadyReported
+                )
+                resumeTimer()
+            }.onFailure { err ->
+                val latest = _state.value as? SlidesViewerUiState.Content ?: return@onFailure
+                _state.value = latest.copy(isSubmittingReport = false, actionError = err.message)
+            }
+        }
+    }
+
+    fun consumeReportResultToast() {
+        val current = _state.value as? SlidesViewerUiState.Content ?: return
+        _state.value = current.copy(reportResultToast = null)
     }
 
     class Factory(private val goalId: String) : ViewModelProvider.Factory {
