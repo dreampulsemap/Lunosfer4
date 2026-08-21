@@ -7,11 +7,13 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Close
@@ -46,21 +48,25 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import io.lunosfer.dreamap.R
+import io.lunosfer.dreamap.data.model.GoalReportReason
 import io.lunosfer.dreamap.data.model.GoalSlide
+import io.lunosfer.dreamap.supabase.supabaseClient
 import io.lunosfer.dreamap.ui.theme.*
 import io.lunosfer.dreamap.ui.viewmodel.SlidesViewerUiState
 import io.lunosfer.dreamap.ui.viewmodel.SlidesViewerViewModel
 
 /**
  * "Vizyon Slaytları" — components/SlidesViewer.jsx'in Android karşılığı.
- * Oto-oynatan, Stories tarzı tam ekran deneyim. Kapsam: izleme + mana ver +
- * slayt kaydet + (sahipse) sil. Yorumlar/bildir/düzenle bu sürümde yok.
+ * Oto-oynatan, Stories tarzı tam ekran deneyim: izleme + mana ver + slayt
+ * kaydet + (sahipse) sil + yorumlar (bottom sheet) + bildir (rapor) +
+ * paylaşan profiline gitme.
  */
 @Composable
 fun SlidesViewerScreen(
     goalId: String,
     onBack: () -> Unit,
-    onGoalClick: (String) -> Unit
+    onGoalClick: (String) -> Unit,
+    onUserClick: (String) -> Unit = {}
 ) {
     val factory = remember(goalId) { SlidesViewerViewModel.Factory(goalId) }
     val viewModel: SlidesViewerViewModel = viewModel(factory = factory)
@@ -108,19 +114,23 @@ fun SlidesViewerScreen(
                     onPrevious = viewModel::previousSlide,
                     onClose = onBack,
                     onGoalClick = { s.goal?.let { onGoalClick(it.id) } },
+                    onUserClick = { s.owner?.let { onUserClick(it.id) } ?: s.goal?.let { onUserClick(it.userId) } },
                     onToggleMana = viewModel::toggleMana,
                     onToggleSave = viewModel::toggleSaveSlide,
-                    onDelete = viewModel::deleteCurrentSlide
+                    onDelete = viewModel::deleteCurrentSlide,
+                    onOpenComments = viewModel::openComments,
+                    onCloseComments = viewModel::closeComments,
+                    onAddComment = viewModel::addComment,
+                    onDeleteComment = viewModel::deleteComment,
+                    onOpenReport = viewModel::openReportSheet,
+                    onCloseReport = viewModel::closeReportSheet,
+                    onSubmitReport = viewModel::submitReport
                 )
             }
             is SlidesViewerUiState.Closed -> {}
         }
     }
 }
-
-// Bazı projelerde "back"/"close" gibi ortak string'ler farklı adlarla var
-// olabilir; burada sabit bir Türkçe metne düşüyoruz ki eksik kaynak
-// yüzünden derleme kırılmasın.
 
 @Composable
 internal fun SlidesViewerContent(
@@ -131,9 +141,17 @@ internal fun SlidesViewerContent(
     onPrevious: () -> Unit,
     onClose: () -> Unit,
     onGoalClick: () -> Unit,
+    onUserClick: () -> Unit = {},
     onToggleMana: () -> Unit,
     onToggleSave: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onOpenComments: () -> Unit = {},
+    onCloseComments: () -> Unit = {},
+    onAddComment: (String) -> Unit = {},
+    onDeleteComment: (String) -> Unit = {},
+    onOpenReport: () -> Unit = {},
+    onCloseReport: () -> Unit = {},
+    onSubmitReport: (GoalReportReason, String?) -> Unit = { _, _ -> }
 ) {
     val slide = state.currentSlide ?: return
     val isPlaying = !state.isPaused
@@ -224,6 +242,7 @@ internal fun SlidesViewerContent(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(
+                    modifier = Modifier.clickable(onClick = onUserClick),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -287,6 +306,8 @@ internal fun SlidesViewerContent(
                         IconButton(onClick = onDelete) {
                             Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.generic_delete_cd), tint = SemanticDanger400)
                         }
+                    } else {
+                        VisionMoreMenuButton(isOwner = false, onReportClick = onOpenReport)
                     }
                     IconButton(onClick = onClose) {
                         Icon(Icons.Default.Close, contentDescription = stringResource(R.string.generic_close_cd), tint = Color.White)
@@ -323,6 +344,17 @@ internal fun SlidesViewerContent(
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = onOpenComments) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Comment,
+                        contentDescription = stringResource(R.string.goal_detail_comments_count, state.comments.size),
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 IconButton(onClick = onToggleSave) {
                     Icon(
                         imageVector = if (slide.hasSaved == true) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
@@ -339,6 +371,26 @@ internal fun SlidesViewerContent(
                 )
             }
         }
+    }
+
+    if (state.showComments) {
+        VisionCommentsSheet(
+            comments = state.comments,
+            isLoading = state.isLoadingComments,
+            isSubmitting = state.isSubmittingComment,
+            currentUserId = supabaseClient.auth.currentUserOrNull()?.id,
+            onDismiss = onCloseComments,
+            onAddComment = onAddComment,
+            onDeleteComment = onDeleteComment
+        )
+    }
+
+    if (state.showReportSheet) {
+        VisionReportSheet(
+            isSubmitting = state.isSubmittingReport,
+            onDismiss = onCloseReport,
+            onSubmit = onSubmitReport
+        )
     }
 }
 

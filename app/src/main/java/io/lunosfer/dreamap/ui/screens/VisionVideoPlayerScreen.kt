@@ -6,9 +6,13 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Close
@@ -22,11 +26,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -36,22 +43,26 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.compose.ui.res.stringResource
+import coil.compose.AsyncImage
 import io.lunosfer.dreamap.R
+import io.lunosfer.dreamap.data.model.GoalReportReason
+import io.lunosfer.dreamap.supabase.supabaseClient
 import io.lunosfer.dreamap.ui.theme.*
 import io.lunosfer.dreamap.ui.viewmodel.VisionVideoPlayerUiState
 import io.lunosfer.dreamap.ui.viewmodel.VisionVideoPlayerViewModel
 import kotlinx.coroutines.delay
 
 /**
- * components/VisionVideoPlayer.jsx'in Android karşılığı — bilinçli olarak
- * küçük tutuldu (bkz. ViewModel'deki not). Tam ekran, edge-to-edge, döngülü
- * oynatan tek video; dokununca oynat/duraklat, çift dokununca beğen.
+ * components/VisionVideoPlayer.jsx'in Android karşılığı. Tam ekran,
+ * edge-to-edge, döngülü oynatan tek video; dokununca oynat/duraklat, çift
+ * dokununca beğen, paylaşan profiline gitme, yorumlar, bildirme.
  */
 @Composable
 fun VisionVideoPlayerScreen(
     goalId: String,
     onBack: () -> Unit,
-    onEdit: (String) -> Unit
+    onEdit: (String) -> Unit,
+    onUserClick: (String) -> Unit = {}
 ) {
     val factory = remember(goalId) { VisionVideoPlayerViewModel.Factory(goalId) }
     val viewModel: VisionVideoPlayerViewModel = viewModel(factory = factory)
@@ -85,9 +96,17 @@ fun VisionVideoPlayerScreen(
                     state = s,
                     onClose = onBack,
                     onEdit = { onEdit(goalId) },
+                    onUserClick = { onUserClick(s.goal.owner?.id ?: s.goal.userId) },
                     onToggleMana = viewModel::toggleMana,
                     onDoubleTapLike = viewModel::likeOnDoubleTap,
-                    onToggleSave = viewModel::toggleSave
+                    onToggleSave = viewModel::toggleSave,
+                    onOpenComments = viewModel::openComments,
+                    onCloseComments = viewModel::closeComments,
+                    onAddComment = viewModel::addComment,
+                    onDeleteComment = viewModel::deleteComment,
+                    onOpenReport = viewModel::openReportSheet,
+                    onCloseReport = viewModel::closeReportSheet,
+                    onSubmitReport = viewModel::submitReport
                 )
             }
         }
@@ -99,9 +118,17 @@ internal fun VisionVideoPlayerContent(
     state: VisionVideoPlayerUiState.Content,
     onClose: () -> Unit,
     onEdit: () -> Unit,
+    onUserClick: () -> Unit = {},
     onToggleMana: () -> Unit,
     onDoubleTapLike: () -> Unit,
     onToggleSave: () -> Unit,
+    onOpenComments: () -> Unit = {},
+    onCloseComments: () -> Unit = {},
+    onAddComment: (String) -> Unit = {},
+    onDeleteComment: (String) -> Unit = {},
+    onOpenReport: () -> Unit = {},
+    onCloseReport: () -> Unit = {},
+    onSubmitReport: (GoalReportReason, String?) -> Unit = { _, _ -> },
     isActive: Boolean = true
 ) {
     val context = LocalContext.current
@@ -206,7 +233,7 @@ internal fun VisionVideoPlayerContent(
             )
         }
 
-        // --- Üst gradyan: başlık + kapat (+ sahipse düzenle) ---
+        // --- Üst gradyan: paylaşan (tıklanınca profiline gider) + kapat (+ sahipse düzenle, değilse bildir) ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -220,19 +247,54 @@ internal fun VisionVideoPlayerContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = state.goal.title,
-                color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                modifier = Modifier.weight(1f).padding(end = 8.dp)
-            )
+            Row(
+                modifier = Modifier.weight(1f).padding(end = 8.dp).clickable(onClick = onUserClick),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                val avatarUrl = state.goal.owner?.avatarUrl
+                if (!avatarUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(36.dp).clip(CircleShape).border(1.dp, AstralGold, CircleShape)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.size(36.dp).clip(CircleShape).background(AstralGold.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = state.goal.owner?.nameOrFallback?.take(1)?.uppercase() ?: "?",
+                            color = AstralGold,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        text = state.goal.owner?.nameOrFallback ?: "",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = state.goal.title,
+                        color = AstralGold,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (state.isOwner) {
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.generic_edit_cd), tint = Color.White)
                     }
+                } else {
+                    VisionMoreMenuButton(isOwner = false, onReportClick = onOpenReport)
                 }
                 IconButton(onClick = onClose) {
                     Icon(Icons.Default.Close, contentDescription = stringResource(R.string.generic_close_cd), tint = Color.White)
@@ -267,6 +329,15 @@ internal fun VisionVideoPlayerContent(
                 }
             }
 
+            IconButton(onClick = onOpenComments) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Comment,
+                    contentDescription = stringResource(R.string.goal_detail_comments_count, state.comments.size),
+                    tint = Color.White,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+
             IconButton(onClick = onToggleSave) {
                 Icon(
                     imageVector = if (state.hasSaved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
@@ -276,5 +347,25 @@ internal fun VisionVideoPlayerContent(
                 )
             }
         }
+    }
+
+    if (state.showComments) {
+        VisionCommentsSheet(
+            comments = state.comments,
+            isLoading = state.isLoadingComments,
+            isSubmitting = state.isSubmittingComment,
+            currentUserId = supabaseClient.auth.currentUserOrNull()?.id,
+            onDismiss = onCloseComments,
+            onAddComment = onAddComment,
+            onDeleteComment = onDeleteComment
+        )
+    }
+
+    if (state.showReportSheet) {
+        VisionReportSheet(
+            isSubmitting = state.isSubmittingReport,
+            onDismiss = onCloseReport,
+            onSubmit = onSubmitReport
+        )
     }
 }

@@ -212,7 +212,8 @@ fun MainScreen(
                 VisionVideoPlayerScreen(
                     goalId = goalId,
                     onBack = { navController.popBackStack() },
-                    onEdit = { navController.navigate(Screen.VideoEditor.createRoute(goalId)) }
+                    onEdit = { navController.navigate(Screen.VideoEditor.createRoute(goalId)) },
+                    onUserClick = { userId -> navController.navigate(Screen.PublicProfile.createRoute(userId)) }
                 )
             }
             composable(
@@ -223,7 +224,8 @@ fun MainScreen(
                 SlidesViewerScreen(
                     goalId = goalId,
                     onBack = { navController.popBackStack() },
-                    onGoalClick = { gid -> navController.navigate(Screen.GoalDetail.createRoute(gid)) }
+                    onGoalClick = { gid -> navController.navigate(Screen.GoalDetail.createRoute(gid)) },
+                    onUserClick = { userId -> navController.navigate(Screen.PublicProfile.createRoute(userId)) }
                 )
             }
             composable(
@@ -244,7 +246,8 @@ fun MainScreen(
                 VisionReelsScreen(
                     onClose = { navController.popBackStack() },
                     onOpenGoalDetail = { goalId -> navController.navigate(Screen.GoalDetail.createRoute(goalId)) },
-                    onEditVideo = { goalId -> navController.navigate(Screen.VideoEditor.createRoute(goalId)) }
+                    onEditVideo = { goalId -> navController.navigate(Screen.VideoEditor.createRoute(goalId)) },
+                    onUserClick = { userId -> navController.navigate(Screen.PublicProfile.createRoute(userId)) }
                 )
             }
             composable(Screen.Profile.route) {

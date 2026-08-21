@@ -3,6 +3,8 @@ package io.lunosfer.dreamap.ui.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -51,7 +53,8 @@ import io.lunosfer.dreamap.ui.viewmodel.VisionVideoPlayerViewModel
 fun VisionReelsScreen(
     onClose: () -> Unit,
     onOpenGoalDetail: (String) -> Unit,
-    onEditVideo: (String) -> Unit
+    onEditVideo: (String) -> Unit,
+    onUserClick: (String) -> Unit = {}
 ) {
     val goals = remember { ReelsQueueHolder.goals }
     val startIndex = remember { ReelsQueueHolder.startIndex }
@@ -78,7 +81,8 @@ fun VisionReelsScreen(
                 isActive = pagerState.currentPage == page,
                 onBack = onClose,
                 onEditVideo = onEditVideo,
-                onOpenGoalDetail = onOpenGoalDetail
+                onOpenGoalDetail = onOpenGoalDetail,
+                onUserClick = onUserClick
             )
         }
 
@@ -102,15 +106,16 @@ private fun VisionReelPage(
     isActive: Boolean,
     onBack: () -> Unit,
     onEditVideo: (String) -> Unit,
-    onOpenGoalDetail: (String) -> Unit
+    onOpenGoalDetail: (String) -> Unit,
+    onUserClick: (String) -> Unit
 ) {
     val hasVideo = !goal.visionVideoUrl.isNullOrBlank()
     val hasSlides = (goal.slideCount ?: 0) > 0
 
     when {
-        hasVideo -> VisionReelVideoPage(goal = goal, isActive = isActive, onBack = onBack, onEditVideo = onEditVideo)
-        hasSlides -> VisionReelSlidesPage(goal = goal, isActive = isActive, onBack = onBack, onOpenGoalDetail = onOpenGoalDetail)
-        else -> VisionReelCoverFallbackPage(goal = goal, onBack = onBack, onOpenGoalDetail = onOpenGoalDetail)
+        hasVideo -> VisionReelVideoPage(goal = goal, isActive = isActive, onBack = onBack, onEditVideo = onEditVideo, onUserClick = onUserClick)
+        hasSlides -> VisionReelSlidesPage(goal = goal, isActive = isActive, onBack = onBack, onOpenGoalDetail = onOpenGoalDetail, onUserClick = onUserClick)
+        else -> VisionReelCoverFallbackPage(goal = goal, onBack = onBack, onOpenGoalDetail = onOpenGoalDetail, onUserClick = onUserClick)
     }
 }
 
@@ -119,7 +124,8 @@ private fun VisionReelVideoPage(
     goal: Goal,
     isActive: Boolean,
     onBack: () -> Unit,
-    onEditVideo: (String) -> Unit
+    onEditVideo: (String) -> Unit,
+    onUserClick: (String) -> Unit
 ) {
     val factory = remember(goal.id) { VisionVideoPlayerViewModel.Factory(goal.id) }
     val viewModel: VisionVideoPlayerViewModel = viewModel(factory = factory, key = "reel_video_${goal.id}")
@@ -133,9 +139,17 @@ private fun VisionReelVideoPage(
                 state = s,
                 onClose = onBack,
                 onEdit = { onEditVideo(goal.id) },
+                onUserClick = { onUserClick(s.goal.owner?.id ?: s.goal.userId) },
                 onToggleMana = viewModel::toggleMana,
                 onDoubleTapLike = viewModel::likeOnDoubleTap,
                 onToggleSave = viewModel::toggleSave,
+                onOpenComments = viewModel::openComments,
+                onCloseComments = viewModel::closeComments,
+                onAddComment = viewModel::addComment,
+                onDeleteComment = viewModel::deleteComment,
+                onOpenReport = viewModel::openReportSheet,
+                onCloseReport = viewModel::closeReportSheet,
+                onSubmitReport = viewModel::submitReport,
                 isActive = isActive
             )
         }
@@ -147,7 +161,8 @@ private fun VisionReelSlidesPage(
     goal: Goal,
     isActive: Boolean,
     onBack: () -> Unit,
-    onOpenGoalDetail: (String) -> Unit
+    onOpenGoalDetail: (String) -> Unit,
+    onUserClick: (String) -> Unit
 ) {
     val factory = remember(goal.id) { SlidesViewerViewModel.Factory(goal.id) }
     val viewModel: SlidesViewerViewModel = viewModel(factory = factory, key = "reel_slides_${goal.id}")
@@ -176,9 +191,17 @@ private fun VisionReelSlidesPage(
                 onPrevious = viewModel::previousSlide,
                 onClose = onBack,
                 onGoalClick = { s.goal?.let { onOpenGoalDetail(it.id) } },
+                onUserClick = { onUserClick(s.owner?.id ?: s.goal?.userId ?: goal.userId) },
                 onToggleMana = viewModel::toggleMana,
                 onToggleSave = viewModel::toggleSaveSlide,
-                onDelete = viewModel::deleteCurrentSlide
+                onDelete = viewModel::deleteCurrentSlide,
+                onOpenComments = viewModel::openComments,
+                onCloseComments = viewModel::closeComments,
+                onAddComment = viewModel::addComment,
+                onDeleteComment = viewModel::deleteComment,
+                onOpenReport = viewModel::openReportSheet,
+                onCloseReport = viewModel::closeReportSheet,
+                onSubmitReport = viewModel::submitReport
             )
             is SlidesViewerUiState.Closed -> {}
         }
@@ -190,7 +213,8 @@ private fun VisionReelSlidesPage(
 private fun VisionReelCoverFallbackPage(
     goal: Goal,
     onBack: () -> Unit,
-    onOpenGoalDetail: (String) -> Unit
+    onOpenGoalDetail: (String) -> Unit,
+    onUserClick: (String) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (!goal.coverImageUrl.isNullOrBlank()) {
@@ -218,6 +242,27 @@ private fun VisionReelCoverFallbackPage(
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.clickable { onUserClick(goal.owner?.id ?: goal.userId) },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val avatarUrl = goal.owner?.avatarUrl
+                    if (!avatarUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(28.dp).clip(CircleShape).border(1.dp, AstralGold, CircleShape)
+                        )
+                    }
+                    Text(
+                        text = goal.owner?.nameOrFallback ?: "",
+                        color = AstralGold,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 Text(goal.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 OutlinedButton(
                     onClick = { onOpenGoalDetail(goal.id) },
