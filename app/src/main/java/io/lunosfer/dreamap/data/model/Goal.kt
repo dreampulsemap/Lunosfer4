@@ -25,6 +25,11 @@ data class Goal(
     @SerialName("has_reacted") val hasReacted: Boolean? = false,
     @SerialName("has_saved") val hasSaved: Boolean? = false,
     @SerialName("slide_count") val slideCount: Int? = 0,
+    // goal_comments'e yazılınca handle_goal_comment_change trigger'ı bu
+    // kolonu otomatik günceller (bkz. pages/api/goals/comment.js) — Android
+    // tarafında yorum ikonunun altındaki sayıyı, yorum paneli hiç açılmadan
+    // (ağ isteği atmadan) doğru göstermek için kullanılıyor.
+    @SerialName("comments_count") val commentsCount: Int? = 0,
     // Reels editöründen export edilip Storage'a yüklenen videonun public URL'i
     // (pages/api/goals/save-vision-video.js tarafından yazılır).
     @SerialName("vision_video_url") val visionVideoUrl: String? = null,
