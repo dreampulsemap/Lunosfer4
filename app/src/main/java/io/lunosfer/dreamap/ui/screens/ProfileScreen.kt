@@ -97,6 +97,9 @@ fun ProfileScreen(
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             viewModel.clearActionError()
         }
+        if (content?.accountDeleted == true) {
+            onLogout()
+        }
     }
 
     Box(
@@ -186,6 +189,38 @@ fun ProfileScreen(
                                 Icon(Icons.Default.Logout, contentDescription = null, tint = Color.White)
                                 Spacer(Modifier.width(8.dp))
                                 Text(stringResource(R.string.profile_logout_btn), color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+
+                            // Gizlilik Politikası — Play Console "App content" formunun
+                            // zorunlu kıldığı, uygulama içinden erişilebilir link.
+                            TextButton(
+                                onClick = {
+                                    val intent = Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(io.lunosfer.dreamap.util.LegalLinks.privacyPolicyUrl)
+                                    )
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.PrivacyTip, contentDescription = null, tint = MoonSilver)
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.profile_privacy_policy_btn), color = MoonSilver)
+                            }
+
+                            // Hesabı Sil — Google Play "Hesap Silme" politikası (2023)
+                            // gereği: uygulama içinden erişilebilir, geri alınamaz silme akışı.
+                            TextButton(
+                                onClick = { viewModel.openDeleteAccountDialog() },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.DeleteForever, contentDescription = null, tint = SemanticDanger400)
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    stringResource(R.string.profile_delete_account_btn),
+                                    color = SemanticDanger400,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }
@@ -331,6 +366,16 @@ fun EmptyGridMessage(message: String) {
                                 gender = gender
                             )
                         }
+                    )
+                }
+
+                // Hesap Silme Onay Diyaloğu — Google Play "Hesap Silme" politikası
+                // gereği: geri alınamaz olduğu kullanıcıya açıkça belirtilir.
+                if (s.isDeleteAccountDialogOpen) {
+                    DeleteAccountConfirmDialog(
+                        isDeleting = s.isDeletingAccount,
+                        onConfirm = { viewModel.deleteAccount() },
+                        onDismiss = { viewModel.closeDeleteAccountDialog() }
                     )
                 }
             }
@@ -612,6 +657,54 @@ private fun PremiumStatusCard(status: PremiumStatusResponse, onUpgradeClick: () 
             }
         }
     }
+}
+
+@Composable
+private fun DeleteAccountConfirmDialog(
+    isDeleting: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isDeleting) onDismiss() },
+        containerColor = Void900,
+        icon = { Icon(Icons.Default.DeleteForever, contentDescription = null, tint = SemanticDanger400) },
+        title = {
+            Text(
+                text = stringResource(R.string.delete_account_dialog_title),
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.delete_account_dialog_desc),
+                color = MoonSilver
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isDeleting) {
+                if (isDeleting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = SemanticDanger400,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.delete_account_dialog_confirm),
+                        color = SemanticDanger400,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) {
+                Text(text = stringResource(R.string.delete_account_dialog_cancel), color = MoonSilver)
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
