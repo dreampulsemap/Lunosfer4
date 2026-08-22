@@ -441,6 +441,7 @@
     <string name="editor_pixabay_button">Choose from Pixabay</string>
     <string name="editor_gallery_button">Gallery</string>
     <string name="editor_camera_button">Record</string>
+    <string name="editor_camera_permission_denied">Camera permission is required to record a clip</string>
     <string name="filter_none">Original</string>
     <string name="filter_vivid">Vivid</string>
     <string name="filter_warm">Warm</string>
