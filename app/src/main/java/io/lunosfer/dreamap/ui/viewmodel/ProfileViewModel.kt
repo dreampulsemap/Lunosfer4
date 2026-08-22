@@ -29,6 +29,9 @@ sealed class ProfileUiState {
         val isLoadingPremium: Boolean = false,
         val isSavingProfile: Boolean = false,
         val isEditModalOpen: Boolean = false,
+        val isDeleteAccountDialogOpen: Boolean = false,
+        val isDeletingAccount: Boolean = false,
+        val accountDeleted: Boolean = false,
         val actionMessage: String? = null,
         val actionError: String? = null
     ) : ProfileUiState()
@@ -140,6 +143,51 @@ class ProfileViewModel(
                     actionError = err.message ?: "Profil güncellenemedi."
                 )
             }
+        }
+    }
+
+    fun openDeleteAccountDialog() {
+        val current = _state.value as? ProfileUiState.Content ?: return
+        _state.value = current.copy(isDeleteAccountDialogOpen = true)
+    }
+
+    fun closeDeleteAccountDialog() {
+        val current = _state.value as? ProfileUiState.Content ?: return
+        _state.value = current.copy(isDeleteAccountDialogOpen = false)
+    }
+
+    // Google Play "Hesap Silme" politikası gereği: kullanıcı hesabını ve
+    // ilişkili verilerini kalıcı olarak siler (bkz. ProfileRepository.deleteAccount,
+    // pages/api/account/delete.js). Başarılı olursa yerel oturum da kapatılır;
+    // ekran bunu (accountDeleted=true) izleyip kullanıcıyı login/onboarding'e yönlendirir.
+    fun deleteAccount() {
+        val current = _state.value as? ProfileUiState.Content ?: return
+        _state.value = current.copy(isDeletingAccount = true)
+
+        viewModelScope.launch {
+            repository.deleteAccount()
+                .onSuccess {
+                    try {
+                        supabaseClient.auth.signOut()
+                    } catch (_: Exception) {
+                        // Hesap sunucuda zaten silindi; yerel signOut başarısız
+                        // olsa bile kullanıcıyı login'e yönlendirmeye devam ediyoruz.
+                    }
+                    val latest = _state.value as? ProfileUiState.Content ?: return@onSuccess
+                    _state.value = latest.copy(
+                        isDeletingAccount = false,
+                        isDeleteAccountDialogOpen = false,
+                        accountDeleted = true
+                    )
+                }
+                .onFailure { err ->
+                    val latest = _state.value as? ProfileUiState.Content ?: return@onFailure
+                    _state.value = latest.copy(
+                        isDeletingAccount = false,
+                        isDeleteAccountDialogOpen = false,
+                        actionError = err.message ?: "Hesap silinemedi. Lütfen tekrar deneyin."
+                    )
+                }
         }
     }
 
