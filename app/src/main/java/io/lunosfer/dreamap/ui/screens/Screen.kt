@@ -63,4 +63,8 @@ sealed class Screen(val route: String) {
     object VideoEditor : Screen("video_editor/{goalId}") {
         fun createRoute(goalId: String) = "video_editor/$goalId"
     }
+
+    // "Rüya Küresi" — pages/globe.js'in WebView ile gömülü hali (gerçek 3B
+    // küreyi native'de yeniden yazmak yerine). Herkese açık, parametre yok.
+    object Globe : Screen("globe")
 }

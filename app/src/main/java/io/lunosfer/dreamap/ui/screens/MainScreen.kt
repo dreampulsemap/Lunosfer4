@@ -104,7 +104,8 @@ fun MainScreen(
         Screen.VisionVideoPlayer.route,
         Screen.SlidesViewer.route,
         Screen.SlideCreator.route,
-        Screen.VisionReels.route
+        Screen.VisionReels.route,
+        Screen.Globe.route
     )
     val showTopBottomBars = currentRoute != Screen.Auth.route && currentRoute !in fullScreenRoutes
 
@@ -126,6 +127,7 @@ fun MainScreen(
                     onProfileClick = { navController.navigate(Screen.Profile.route) },
                     onNotificationsClick = { navController.navigate(Screen.Notifications.route) },
                     onSpiritualToolsClick = { navController.navigate(Screen.SpiritualTools.route) },
+                    onGlobeClick = { navController.navigate(Screen.Globe.route) },
                     onBuyAuraClick = {
                         billingSheetTab = BillingTab.AURA
                         showBillingSheet = true
@@ -242,6 +244,9 @@ fun MainScreen(
                 val goalId = backStackEntry.arguments?.getString("goalId") ?: return@composable
                 VideoEditorScreen(goalId = goalId, onClose = { navController.popBackStack() })
             }
+            composable(Screen.Globe.route) {
+                GlobeScreen(onBack = { navController.popBackStack() })
+            }
             composable(Screen.VisionReels.route) {
                 VisionReelsScreen(
                     onClose = { navController.popBackStack() },
@@ -346,7 +351,8 @@ fun TopBar(
     onProfileClick: (() -> Unit)? = null,
     onNotificationsClick: (() -> Unit)? = null,
     onSpiritualToolsClick: (() -> Unit)? = null,
-    onBuyAuraClick: (() -> Unit)? = null
+    onBuyAuraClick: (() -> Unit)? = null,
+    onGlobeClick: (() -> Unit)? = null
 ) {
     var showAuraPopup by remember { mutableStateOf(false) }
 
@@ -463,6 +469,13 @@ fun TopBar(
                             onClick = {
                                 showMoreMenu = false
                                 onSpiritualToolsClick?.invoke()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.main_menu_globe)) },
+                            onClick = {
+                                showMoreMenu = false
+                                onGlobeClick?.invoke()
                             }
                         )
                         DropdownMenuItem(text = { Text(stringResource(R.string.main_menu_settings)) }, onClick = { showMoreMenu = false })
