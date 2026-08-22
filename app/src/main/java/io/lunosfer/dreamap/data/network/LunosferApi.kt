@@ -260,6 +260,14 @@ interface LunosferApi {
     @GET("api/profile-stats")
     suspend fun getProfileStats(): io.lunosfer.dreamap.data.model.ProfileStatsResponse
 
+    // --- Hesap Yönetimi ---
+    // Google Play "Hesap Silme" politikası (2023) gereği eklendi: kullanıcının
+    // hesabını ve ilişkili tüm verilerini kalıcı olarak siler. Sunucu tarafı
+    // bkz. pages/api/account/delete.js (dreamap-frontend) — Authorization
+    // header'daki token'dan kullanıcıyı çözüp siler. Geri alınamaz; body gerekmez.
+    @POST("api/account/delete")
+    suspend fun deleteAccount(): io.lunosfer.dreamap.data.model.GenericSuccessResponse
+
     // --- Diary / Stories ---
 
     @GET("api/diary/feed")
