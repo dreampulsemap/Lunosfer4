@@ -1,5 +1,8 @@
 package io.lunosfer.dreamap.ui.screens.videoeditor
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
@@ -52,6 +56,7 @@ fun VideoEditorScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showPixabayDialog by remember { mutableStateOf(false) }
     var pendingCameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val cameraPermissionDeniedMessage = stringResource(R.string.editor_camera_permission_denied)
 
     LaunchedEffect(goalId) { viewModel.init(goalId) }
 
@@ -79,12 +84,28 @@ fun VideoEditorScreen(
         if (success && uri != null) viewModel.addVideoClips(listOf(uri))
         pendingCameraUri = null
     }
-    fun launchCamera() {
+    fun startCameraCapture() {
         val dir = File(context.cacheDir, "reel_recordings").apply { mkdirs() }
         val file = File(dir, "reel_${System.currentTimeMillis()}.mp4")
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         pendingCameraUri = uri
         cameraLauncher.launch(uri)
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            startCameraCapture()
+        } else {
+            Toast.makeText(context, cameraPermissionDeniedMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
+    fun launchCamera() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCameraCapture()
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
 
     val musicPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
