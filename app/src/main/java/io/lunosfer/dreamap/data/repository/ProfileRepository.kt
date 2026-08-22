@@ -80,6 +80,15 @@ class ProfileRepository {
         api.getProfileStats()
     }
 
+    // Hesabı ve ilişkili tüm verileri kalıcı olarak siler (bkz. LunosferApi.deleteAccount).
+    // Geri alınamaz — çağıran taraf (ViewModel) kullanıcıdan önce onay almalı.
+    suspend fun deleteAccount(): Result<Unit> = runCatching {
+        val res = api.deleteAccount()
+        if (!res.success && !res.ok) {
+            throw Exception(res.error ?: "Hesap silinemedi")
+        }
+    }
+
     private fun parseHttpError(e: HttpException): String {
         val errorBody = e.response()?.errorBody()?.string()
         if (!errorBody.isNullOrBlank()) {
