@@ -329,12 +329,20 @@ internal fun VisionVideoPlayerContent(
                 }
             }
 
-            IconButton(onClick = onOpenComments) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Comment,
-                    contentDescription = stringResource(R.string.goal_detail_comments_count, state.comments.size),
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = onOpenComments) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Comment,
+                        contentDescription = stringResource(R.string.goal_detail_comments_count, state.goal.commentsCount ?: 0),
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+                Text(
+                    text = "${state.goal.commentsCount ?: 0}",
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 

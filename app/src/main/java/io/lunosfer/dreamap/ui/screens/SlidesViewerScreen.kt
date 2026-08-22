@@ -347,11 +347,17 @@ internal fun SlidesViewerContent(
                 IconButton(onClick = onOpenComments) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Comment,
-                        contentDescription = stringResource(R.string.goal_detail_comments_count, state.comments.size),
+                        contentDescription = stringResource(R.string.goal_detail_comments_count, state.commentsCount),
                         tint = Color.White,
                         modifier = Modifier.size(26.dp)
                     )
                 }
+                Text(
+                    text = "${state.commentsCount}",
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
