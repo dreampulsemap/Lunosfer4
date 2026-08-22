@@ -174,6 +174,7 @@ class VisionVideoPlayerViewModel(
                 val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onSuccess
                 _state.value = latest.copy(
                     comments = latest.comments + comment,
+                    goal = latest.goal.copy(commentsCount = (latest.goal.commentsCount ?: 0) + 1),
                     isSubmittingComment = false
                 )
             }.onFailure { err ->
@@ -186,12 +187,18 @@ class VisionVideoPlayerViewModel(
     fun deleteComment(commentId: String) {
         val current = _state.value as? VisionVideoPlayerUiState.Content ?: return
         val removed = current.comments.firstOrNull { it.id == commentId }
-        _state.value = current.copy(comments = current.comments.filterNot { it.id == commentId })
+        _state.value = current.copy(
+            comments = current.comments.filterNot { it.id == commentId },
+            goal = current.goal.copy(commentsCount = maxOf(0, (current.goal.commentsCount ?: 0) - 1))
+        )
         viewModelScope.launch {
             repository.deleteGoalComment(commentId).onFailure {
                 val latest = _state.value as? VisionVideoPlayerUiState.Content ?: return@onFailure
                 if (removed == null) return@onFailure
-                _state.value = latest.copy(comments = latest.comments + removed)
+                _state.value = latest.copy(
+                    comments = latest.comments + removed,
+                    goal = latest.goal.copy(commentsCount = (latest.goal.commentsCount ?: 0) + 1)
+                )
             }
         }
     }

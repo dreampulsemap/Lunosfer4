@@ -40,6 +40,12 @@ sealed class SlidesViewerUiState {
         val isPaused: Boolean = false,
         val hasReacted: Boolean = false,
         val believersCount: Int = 0,
+        // goal.commentsCount'tan başlatılır (trigger ile güncel tutulan DB
+        // kolonu) — panel hiç açılmadan doğru sayıyı göstermek için. Panel
+        // açılıp yorumlar gerçekten yüklendikten sonra comments.size daha
+        // güncel olabilir (ör. iki cihazdan eşzamanlı yorum), ama ekleme/
+        // silme işlemleri her iki sayacı da senkron tutar.
+        val commentsCount: Int = 0,
         val actionError: String? = null,
         // --- Yorumlar (bottom sheet) ---
         val showComments: Boolean = false,
@@ -102,7 +108,8 @@ class SlidesViewerViewModel(
                         currentIndex = 0,
                         isOwner = currentUserId != null && goal?.userId == currentUserId,
                         hasReacted = goal?.hasReacted ?: false,
-                        believersCount = goal?.believersCount ?: 0
+                        believersCount = goal?.believersCount ?: 0,
+                        commentsCount = goal?.commentsCount ?: 0
                     )
                     startTimer()
                 }
@@ -291,6 +298,7 @@ class SlidesViewerViewModel(
                 val latest = _state.value as? SlidesViewerUiState.Content ?: return@onSuccess
                 _state.value = latest.copy(
                     comments = latest.comments + comment,
+                    commentsCount = latest.commentsCount + 1,
                     isSubmittingComment = false
                 )
             }.onFailure { err ->
@@ -304,12 +312,18 @@ class SlidesViewerViewModel(
         val current = _state.value as? SlidesViewerUiState.Content ?: return
         val removed = current.comments.firstOrNull { it.id == commentId }
         // Optimistic — geri alma gerekirse removed'i ekliyoruz.
-        _state.value = current.copy(comments = current.comments.filterNot { it.id == commentId })
+        _state.value = current.copy(
+            comments = current.comments.filterNot { it.id == commentId },
+            commentsCount = maxOf(0, current.commentsCount - 1)
+        )
         viewModelScope.launch {
             repository.deleteGoalComment(commentId).onFailure {
                 val latest = _state.value as? SlidesViewerUiState.Content ?: return@onFailure
                 if (removed == null) return@onFailure
-                _state.value = latest.copy(comments = latest.comments + removed)
+                _state.value = latest.copy(
+                    comments = latest.comments + removed,
+                    commentsCount = latest.commentsCount + 1
+                )
             }
         }
     }
