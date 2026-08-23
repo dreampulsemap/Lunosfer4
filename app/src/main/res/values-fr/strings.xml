@@ -484,4 +484,12 @@
     <string name="sharecard_synthesis_dream_count">Rêves Enregistrés</string>
     <string name="sharecard_synthesis_archetypes">Archétypes Dominants</string>
     <string name="sharecard_synthesis_sentiment">Sentiment Dominant</string>
+
+    <!-- Newly extracted hardcoded strings -->
+    <string name="home_ai_jung_badge">AI JUNG</string>
+    <string name="home_brand_watermark">LUNOSFER</string>
+    <string name="spiritual_psyche_map_title">Carte Psychique</string>
+    <string name="spiritual_score_suffix">/100</string>
+    <string name="spiritual_percentage_format">%%%1$d</string>
+    <string name="mental_wall_image_desc">Image du Mur Mental</string>
 </resources>
