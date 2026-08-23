@@ -48,6 +48,11 @@ data class AiJungianAnalysis(
     val title: Map<String, String>? = null,
     val summary: Map<String, String>? = null,
     val motiv: Map<String, String>? = null,
+    // Backend addition (analyze-dream.js): a single key image/object from the
+    // dream, same multi-lang map shape as title/summary/motiv. Older dreams
+    // analyzed before this field existed will have it null — the share card
+    // mapper falls back to `tags` for those.
+    val symbol: Map<String, String>? = null,
     val sentiment: String? = null,
     val archetypes: List<String>? = null
 )

@@ -34,6 +34,12 @@ data class Goal(
     // (pages/api/goals/save-vision-video.js tarafından yazılır).
     @SerialName("vision_video_url") val visionVideoUrl: String? = null,
     @SerialName("target_date") val targetDate: String? = null,
+    // Backend addition (pages/api/goals/generate-future-message.js) — AI line
+    // written as if from the user's future self who already reached this
+    // goal. Null until that endpoint has been called for this goal at least
+    // once; VisionMessageCard's mapper falls back to description/title
+    // until then.
+    @SerialName("ai_future_message") val aiFutureMessage: String? = null,
     @SerialName("created_at") val createdAt: String,
     @SerialName("micro_goals") val microGoals: List<MicroGoal>? = null,
     val owner: UserProfile? = null,
