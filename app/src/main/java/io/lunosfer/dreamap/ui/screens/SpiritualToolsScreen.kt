@@ -213,7 +213,7 @@ private fun MentalWallSection(
                             if (!res.displayImage.isNullOrBlank()) {
                                 AsyncImage(
                                     model = res.displayImage,
-                                    contentDescription = "Mental Wall Image",
+                                    contentDescription = stringResource(R.string.mental_wall_image_desc),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -304,7 +304,7 @@ private fun PsycheMapSection(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("🌌", fontSize = 22.sp)
                             Text(
-                                "Psyche Map",
+                                stringResource(R.string.spiritual_psyche_map_title),
                                 color = AstralGold,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
@@ -354,7 +354,7 @@ private fun PsycheMapSection(
                                 ) {
                                     Text(stringResource(R.string.spiritual_psychic_score), color = Color.Gray, fontSize = 11.sp)
                                     Spacer(Modifier.height(4.dp))
-                                    Text("${data.psychicScore}/100", color = AstralGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                    Text("${data.psychicScore}" + stringResource(R.string.spiritual_score_suffix), color = AstralGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -413,7 +413,7 @@ private fun PsycheMapSection(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(arch.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                    Text("%${arch.percentage ?: 0}", color = AstralGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.spiritual_percentage_format, arch.percentage ?: 0), color = AstralGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                                 LinearProgressIndicator(
                                     progress = { ((arch.percentage ?: 0) / 100f).coerceIn(0f, 1f) },
