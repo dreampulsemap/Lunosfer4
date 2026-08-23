@@ -485,4 +485,12 @@
     <string name="sharecard_synthesis_dream_count">Записано снов</string>
     <string name="sharecard_synthesis_archetypes">Преобладающие архетипы</string>
     <string name="sharecard_synthesis_sentiment">Преобладающее чувство</string>
+
+    <!-- Newly extracted hardcoded strings -->
+    <string name="home_ai_jung_badge">ИИ ЮНГ</string>
+    <string name="home_brand_watermark">LUNOSFER</string>
+    <string name="spiritual_psyche_map_title">Карта психики</string>
+    <string name="spiritual_score_suffix">/100</string>
+    <string name="spiritual_percentage_format">%%1$d</string>
+    <string name="mental_wall_image_desc">Изображение Ментальной Стены</string>
 </resources>
