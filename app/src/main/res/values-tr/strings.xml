@@ -500,4 +500,12 @@
     <string name="sharecard_synthesis_dream_count">Kaydedilen Rüyalar</string>
     <string name="sharecard_synthesis_archetypes">Baskın Arketipler</string>
     <string name="sharecard_synthesis_sentiment">Baskın Duygu</string>
+
+    <!-- Newly extracted hardcoded strings -->
+    <string name="home_ai_jung_badge">AI JUNG</string>
+    <string name="home_brand_watermark">LUNOSFER</string>
+    <string name="spiritual_psyche_map_title">Ruh Haritası</string>
+    <string name="spiritual_score_suffix">/100</string>
+    <string name="spiritual_percentage_format">%%%1$d</string>
+    <string name="mental_wall_image_desc">Zihin Duvarı Görseli</string>
 </resources>
