@@ -58,9 +58,7 @@ class ProfileViewModel(
             _state.value = ProfileUiState.Error(io.lunosfer.dreamap.DreamapApp.instance.getString(io.lunosfer.dreamap.R.string.error_no_session))
             return
         }
-
         _state.value = ProfileUiState.Loading
-
         viewModelScope.launch {
             val profileDef = async { repository.getUserProfile(uid).getOrNull() ?: FullUserProfile(id = uid) }
             val premiumDef = async { repository.getPremiumStatus().getOrNull() ?: PremiumStatusResponse() }
@@ -100,6 +98,7 @@ class ProfileViewModel(
         displayName: String,
         avatarUrl: String,
         isPrivate: Boolean,
+        profileVisibility: String,
         language: String,
         gender: String
     ) {
@@ -115,6 +114,12 @@ class ProfileViewModel(
             return
         }
 
+        // Profil tamamen gizliyse (private) tüm paylaşımlar otomatik tamamen gizli
+        // olmalı; bu iş kuralı sunucu tarafında da uygulanmalı ancak istemcide de
+        // tutarlılık için isPrivate bayrağını profileVisibility ile senkron tutuyoruz.
+        val resolvedVisibility = profileVisibility.ifBlank { if (isPrivate) "private" else "public" }
+        val resolvedIsPrivate = resolvedVisibility == "private"
+
         _state.value = current.copy(isSavingProfile = true)
 
         val req = UpdateProfileRequest(
@@ -122,7 +127,8 @@ class ProfileViewModel(
             username = username.trim().takeIf { it.isNotBlank() },
             displayName = displayName.trim().takeIf { it.isNotBlank() },
             avatarUrl = avatarUrl.trim().takeIf { it.isNotBlank() },
-            isPrivate = isPrivate,
+            isPrivate = resolvedIsPrivate,
+            profileVisibility = resolvedVisibility,
             language = language.takeIf { it.isNotBlank() },
             gender = gender.takeIf { it.isNotBlank() }
         )
@@ -163,7 +169,6 @@ class ProfileViewModel(
     fun deleteAccount() {
         val current = _state.value as? ProfileUiState.Content ?: return
         _state.value = current.copy(isDeletingAccount = true)
-
         viewModelScope.launch {
             repository.deleteAccount()
                 .onSuccess {
