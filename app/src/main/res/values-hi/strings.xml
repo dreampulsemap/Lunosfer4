@@ -486,4 +486,12 @@
     <string name="sharecard_synthesis_dream_count">दर्ज किए गए सपने</string>
     <string name="sharecard_synthesis_archetypes">प्रमुख आर्कटाइप्स</string>
     <string name="sharecard_synthesis_sentiment">प्रमुख भावना</string>
+
+    <!-- Newly extracted hardcoded strings -->
+    <string name="home_ai_jung_badge">एआई यंग</string>
+    <string name="home_brand_watermark">LUNOSFER</string>
+    <string name="spiritual_psyche_map_title">मनोविज्ञान मानचित्र</string>
+    <string name="spiritual_score_suffix">/100</string>
+    <string name="spiritual_percentage_format">%%1$d</string>
+    <string name="mental_wall_image_desc">मानसिक दीवार चित्र</string>
 </resources>
