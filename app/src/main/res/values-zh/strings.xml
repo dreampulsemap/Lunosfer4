@@ -486,4 +486,12 @@
     <string name="sharecard_synthesis_dream_count">已记录梦境</string>
     <string name="sharecard_synthesis_archetypes">主导原型</string>
     <string name="sharecard_synthesis_sentiment">主导情绪</string>
+
+    <!-- Newly extracted hardcoded strings -->
+    <string name="home_ai_jung_badge">AI 荣格</string>
+    <string name="home_brand_watermark">LUNOSFER</string>
+    <string name="spiritual_psyche_map_title">心灵地图</string>
+    <string name="spiritual_score_suffix">/100</string>
+    <string name="spiritual_percentage_format">%%1$d</string>
+    <string name="mental_wall_image_desc">心理墙图片</string>
 </resources>
