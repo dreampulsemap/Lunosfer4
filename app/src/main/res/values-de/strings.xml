@@ -487,4 +487,12 @@
     <string name="sharecard_synthesis_dream_count">Erfasste Träume</string>
     <string name="sharecard_synthesis_archetypes">Vorherrschende Archetypen</string>
     <string name="sharecard_synthesis_sentiment">Vorherrschendes Gefühl</string>
+
+    <!-- Newly extracted hardcoded strings -->
+    <string name="home_ai_jung_badge">AI JUNG</string>
+    <string name="home_brand_watermark">LUNOSFER</string>
+    <string name="spiritual_psyche_map_title">Psyche Map</string>
+    <string name="spiritual_score_suffix">/100</string>
+    <string name="spiritual_percentage_format">%%%1$d</string>
+    <string name="mental_wall_image_desc">Mentalwand-Bild</string>
 </resources>
