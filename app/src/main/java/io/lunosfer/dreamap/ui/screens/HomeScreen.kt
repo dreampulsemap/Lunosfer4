@@ -421,7 +421,7 @@ private fun DreamImagePage(dream: Dream, onDreamClick: (Long) -> Unit) {
                         )
                         Spacer(Modifier.height(10.dp))
                         Text(
-                            text = "LUNOSFER",
+                            text = stringResource(R.string.home_brand_watermark),
                             color = AstralGold.copy(alpha = 0.6f),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -579,7 +579,7 @@ private fun DreamAnalysisPage(dream: Dream) {
                         .border(BorderStroke(0.5.dp, AetherViolet.copy(alpha = 0.4f)), shape = RoundedCornerShape(50))
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
-                    Text("AI JUNG", color = AstralGold, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(stringResource(R.string.home_ai_jung_badge), color = AstralGold, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 }
             }
 
