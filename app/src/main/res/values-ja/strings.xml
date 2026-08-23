@@ -484,4 +484,12 @@
     <string name="sharecard_synthesis_dream_count">記録された夢</string>
     <string name="sharecard_synthesis_archetypes">主なアーキタイプ</string>
     <string name="sharecard_synthesis_sentiment">主な感情</string>
+
+    <!-- Newly extracted hardcoded strings -->
+    <string name="home_ai_jung_badge">AIユング</string>
+    <string name="home_brand_watermark">LUNOSFER</string>
+    <string name="spiritual_psyche_map_title">サイコマップ</string>
+    <string name="spiritual_score_suffix">/100</string>
+    <string name="spiritual_percentage_format">%%1$d</string>
+    <string name="mental_wall_image_desc">メンタルウォールの画像</string>
 </resources>
