@@ -486,4 +486,12 @@
     <string name="sharecard_synthesis_dream_count">الأحلام المسجلة</string>
     <string name="sharecard_synthesis_archetypes">الأنماط السائدة</string>
     <string name="sharecard_synthesis_sentiment">الشعور السائد</string>
+
+    <!-- Newly extracted hardcoded strings -->
+    <string name="home_ai_jung_badge">الذكاء الاصطناعي يونغ</string>
+    <string name="home_brand_watermark">LUNOSFER</string>
+    <string name="spiritual_psyche_map_title">خريطة النفس</string>
+    <string name="spiritual_score_suffix">/100</string>
+    <string name="spiritual_percentage_format">%%1$d</string>
+    <string name="mental_wall_image_desc">صورة الجدار الذهني</string>
 </resources>
