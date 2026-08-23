@@ -487,4 +487,18 @@
     <string name="generic_delete_cd">Delete</string>
     <string name="goalDetail_addReel">🎬 Add Reel</string>
     <string name="goalDetail_editReel">🎬 Edit Reel</string>
+
+    <!-- Shareable cards (ui/components/sharecards) -->
+    <string name="sharecard_dream_archetype_eyebrow">TONIGHT\'S ARCHETYPE</string>
+    <string name="sharecard_dream_sentiment_label">Dominant Feeling</string>
+    <string name="sharecard_dream_symbol_label">Key Symbol</string>
+    <string name="sharecard_friend_tag_eyebrow">A symbol matched with %1$s</string>
+    <string name="sharecard_friend_tag_caption">Tap to see what it means</string>
+    <string name="sharecard_collective_eyebrow">COLLECTIVE NIGHT REPORT</string>
+    <string name="sharecard_collective_body">of Lunosfer dreamers saw %1$s last night</string>
+    <string name="sharecard_vision_eyebrow">MESSAGE FROM YOUR FUTURE SELF</string>
+    <string name="sharecard_diary_eyebrow">TODAY\'S MOMENT</string>
+    <string name="sharecard_synthesis_dream_count">Dreams Logged</string>
+    <string name="sharecard_synthesis_archetypes">Dominant Archetypes</string>
+    <string name="sharecard_synthesis_sentiment">Dominant Feeling</string>
 </resources>
