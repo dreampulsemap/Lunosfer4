@@ -306,48 +306,6 @@ fun ProfileScreen(
                     }
                 }
 
-@Composable
-fun ProfileGridItem(imageUrl: String?, title: String?, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .padding(2.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Void900)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        if (!imageUrl.isNullOrBlank()) {
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Text(
-                text = title ?: "",
-                color = Color.White,
-                fontSize = 12.sp,
-                maxLines = 2,
-                modifier = Modifier.padding(8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun EmptyGridMessage(message: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = message, color = Color.Gray, fontSize = 14.sp)
-    }
-}
-
                                 // Edit Profile Dialog
                 if (s.isEditModalOpen) {
                     EditProfileDialog(
