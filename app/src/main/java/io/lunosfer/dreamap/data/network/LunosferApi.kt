@@ -345,6 +345,10 @@ interface LunosferApi {
         @Query("periodType") periodType: String
     ): io.lunosfer.dreamap.data.model.SummaryResponse
 
+    // Kolektif Gece Raporu share kartı için — parametre yok, agregat veri.
+    @GET("api/dreams/collective-stats")
+    suspend fun getCollectiveStats(): io.lunosfer.dreamap.data.model.CollectiveStatsResponse
+
     // --- Vision Cover & Gallery Management ---
 
     @POST("api/goals/generate-cover")
