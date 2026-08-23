@@ -3,4 +3,6 @@
     <!-- Sistem Kamera uygulamasının video yazması için (Reels editöründe
          ikincil "Kaydet" seçeneği — birincil giriş Pixabay). -->
     <cache-path name="reel_recordings" path="reel_recordings/" />
+    <!-- Paylaşılabilir rüya/vizyon kartları (ShareableCardCapture.kt) için. -->
+    <cache-path name="shared_cards" path="shared_cards/" />
 </paths>
